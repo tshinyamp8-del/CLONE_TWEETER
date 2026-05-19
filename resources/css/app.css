@@ -1,0 +1,894 @@
+* {
+    box-sizing: border-box;
+    /* Empêche le padding de faire gonfler les boîtes */
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+    /* Supprime définitivement le scroll horizontal */
+}
+
+section {
+    width: 100%;
+    max-width: 100vw;
+}
+
+:root {
+    /* Couleur par défaut (Bleu X) */
+    --brand-color: #1d9bf0;
+}
+
+/* Applique la variable aux éléments clés */
+.next-btn,
+.tweet-btn,
+.save-profile-btn-active {
+    background-color: var(--brand-color) !important;
+}
+
+.link-text,
+.nav-item.active i,
+.nav-item.active span {
+    color: var(--brand-color);
+}
+
+/* Style des pastilles de couleur dans les paramètres */
+.color-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.color-dot.active {
+    border: 3px solid white;
+    /* Indique quelle couleur est choisie */
+}
+
+/* --- APPLICATION DES VARIABLES --- */
+body {
+    background-color: var(--main-bg);
+    color: var(--main-text);
+}
+
+/* Tes boutons "Poster" doivent utiliser la variable --brand-color */
+.post-btn,
+.login-btn {
+    background-color: var(--brand-color);
+}
+
+/* ===================================================
+   1. BASE & RESET
+   =================================================== */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: black;
+    color: white;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* ===================================================
+   2. PAGES D'AUTHENTIFICATION (BIENVENUE / LOGIN) - VERSION CORRIGÉE
+   =================================================== */
+.welcome-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    min-height: 100dvh;
+    /* Utilise dvh au lieu de vh */
+    background-color: black;
+}
+
+/* Force les deux côtés à prendre 100% sur mobile */
+@media (max-width: 768px) {
+
+    .logo-side,
+    .content-side {
+        flex: 0 0 100%;
+        /* Prend toute la largeur */
+        width: 100%;
+        height: auto;
+        padding: 20px;
+    }
+
+    .logo-side {
+        height: 200px;
+        /* Réduit la zone du logo sur mobile */
+    }
+}
+
+.welcome-left {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.big-x {
+    font-size: clamp(200px, 20vw, 400px);
+    /* S'adapte à la taille de l'écran */
+}
+
+.welcome-right {
+    flex: 1;
+    padding: 20px;
+    /* Réduit le padding pour gagner de la place */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    /* Aligné à gauche comme le vrai X */
+    gap: 20px;
+}
+
+.welcome-right h1 {
+    font-size: clamp(32px, 8vw, 64px);
+    /* S'adapte tout seul à la taille de l'écran */
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 10px;
+}
+
+/* --- Section Formulaires (Login/Register) --- */
+.auth-section {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    /* On enlève le gap global pour gérer les espaces à la main */
+    gap: 0;
+}
+
+/* Espacement sous le logo et la croix */
+.logo-small {
+    margin-bottom: 20px;
+}
+
+/* Espacement sous le Titre (Connectez-vous / Créer votre compte) */
+.auth-section h2 {
+    margin-bottom: 25px;
+    font-size: 31px;
+}
+
+.auth-section input,
+.auth-section select {
+    background-color: black; /* Fond noir pour se fondre dans la page */
+    border: 1px solid #333639; /* Bordure grise foncée subtile */
+    color: white;
+    padding: 16px 12px;
+    border-radius: 4px; /* X utilise des angles très légèrement arrondis pour les inputs */
+    font-size: 17px;
+    margin-bottom: 20px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+/* L'effet bleu quand on clique dans le champ */
+.auth-section input:focus,
+.auth-section select:focus {
+    border-color: var(--brand-color);
+}
+
+/* Espace spécifique pour le label "Date de naissance" */
+.dob-label {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Date de naissance bien alignée sur une seule ligne */
+.dob-container {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Le mois prend 2 fois plus de place que le jour ou l'année */
+.dob-container select {
+    flex: 2; 
+    cursor: pointer;
+    background-color: black;
+    color: white;
+    border: 1px solid #333;
+    padding: 16px;
+    border-radius: 4px;
+    appearance: none; /* Enlève le style par défaut */
+}
+
+.dob-container input {
+    flex: 1;
+    background-color: black;
+    color: white;
+    border: 1px solid #333;
+    padding: 16px;
+    border-radius: 4px;
+}
+
+/* Optionnel : Ajoute une petite flèche personnalisée pour le select */
+.dob-container select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+}
+/* --- Boutons de Bienvenue --- */
+.welcome-right button {
+    width: 300px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 9999px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: none;
+}
+
+.google-btn {
+    background-color: white;
+    color: black;
+}
+
+.google-btn:hover {
+    background-color: #e6e6e6;
+}
+
+.create-btn {
+    background-color: #1d9bf0;
+    color: white;
+}
+
+.create-btn:hover {
+    background-color: #1a8cd8;
+}
+
+.login-btn {
+    background-color: transparent;
+    border: 1px solid #536471 !important;
+    color: #1d9bf0;
+}
+
+/* --- Bouton SUIVANT / SE CONNECTER (Grand Format) --- */
+.next-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 25px;
+    border-radius: 9999px; /* Cercle parfait sur les bords */
+    border: none;
+    font-weight: 700; /* Plus gras pour l'impact */
+    font-size: 16px;
+    cursor: pointer;
+    background-color: white; /* Contrastant */
+    color: black;
+    transition: background 0.2s;
+}
+
+.next-btn:hover {
+    background-color: #e6e6e6;
+}
+
+/* ===================================================
+   3. LAYOUT PRINCIPAL DE L'APPLICATION
+   =================================================== */
+.app {
+    display: grid;
+    /* La colonne centrale devient flexible (1fr) au lieu de rester bloquée à 600px */
+    grid-template-columns: 275px 1fr 350px;
+    justify-content: center;
+    width: 100%;
+    /* On augmente légèrement la largeur max pour donner de l'air */
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* On ajoute une limite pour que le centre ne devienne pas TROP large sur écran géant */
+.main-content {
+    border-right: 1px solid #333;
+    border-left: 1px solid #333;
+    width: 100%;
+    max-width: 600px;
+    /* Force la largeur standard de X */
+    min-width: 600px;
+    /* Empêche le rétrécissement ou l'élargissement */
+    overflow-x: hidden;
+    /* Sécurité : coupe tout ce qui dépasse horizontalement */
+}
+
+@media (max-width: 1100px) {
+    .app {
+        /* On garde le centre flexible même quand la barre de droite disparaît */
+        grid-template-columns: 80px 1fr;
+    }
+
+    .right-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .mobile-nav {
+        display: flex;
+        /* On l'affiche seulement sur mobile */
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        height: 50px;
+        background: white;
+        border-top: 1px solid #eff3f4;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 20px;
+        z-index: 1000;
+    }
+}
+
+/* --- Sidebar Gauche --- */
+.sidebar {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    padding: 10px 15px;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    width: fit-content;
+    transition: 0.2s;
+}
+
+.nav-item:hover {
+    background: #181818;
+}
+
+.post-btn-sidebar {
+    background: #1d9bf0;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 30px;
+    font-weight: bold;
+    width: 90%;
+    cursor: pointer;
+}
+
+/* ===================================================
+   4. FLUX DE TWEETS & PUBLICATION
+   =================================================== */
+.main-content {
+    border-right: 1px solid #333;
+}
+
+.top-nav {
+    padding: 15px;
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    border-bottom: 1px solid #333;
+    z-index: 100;
+}
+
+.publish-box {
+    display: flex;
+    padding: 15px;
+    border-bottom: 1px solid #333;
+    gap: 12px;
+}
+
+.publish-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #333;
+}
+
+.btn-post-main {
+    background: #1d9bf0;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.tweet {
+    padding: 15px;
+    border-bottom: 1px solid #333;
+    transition: 0.2s;
+}
+
+.tweet:hover {
+    background: #080808;
+}
+
+/* ===================================================
+   5. PAGE PROFIL & MODALE
+   =================================================== */
+.profile-header {
+    position: relative;
+}
+
+.banner {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 1px solid #333;
+}
+
+.profile-pic {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    /* Ton format carré arrondi */
+    border: 4px solid black;
+    object-fit: cover;
+    position: relative;
+    margin-top: -70px;
+    margin-left: 15px;
+    z-index: 2;
+    background-color: #15181c;
+}
+
+.edit-profile-btn-outline {
+    display: block;
+    /* Force le bouton à prendre sa place dans le flux */
+    margin-left: auto;
+    /* Le pousse à droite */
+    margin-right: 15px;
+    margin-top: 12px;
+    /* Espace entre la photo de profil/bannière et le bouton */
+    margin-bottom: 20px;
+    /* C'EST ICI : l'espace vertical avant le nom et la bio */
+    background: transparent;
+    color: white;
+    border: 1px solid #536471;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.edit-profile-btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.avatar-small {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    /* Harmonisé avec la photo de profil */
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* --- Modale d'Édition --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(91, 112, 131, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: black;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+/* Structure de l'en-tête */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    /* Pousse les éléments aux extrémités */
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    /* Espace entre la croix et le titre */
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* Style du bouton Enregistrer (Look X) */
+.save-profile-btn {
+    background-color: white;
+    color: black;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.save-profile-btn:hover {
+    background-color: #e6e6e6;
+}
+
+/* Style de la croix de fermeture */
+.close-modal {
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+}
+
+.input-group {
+    margin-bottom: 25px;
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.input-group label {
+    display: block;
+    color: #71767b;
+    font-size: 13px;
+}
+
+.input-group input,
+.input-group textarea {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    outline: none;
+}
+
+/* ===================================================
+   6. SIDEBAR DROITE & TENDANCES
+   =================================================== */
+.right-sidebar {
+    padding: 10px 20px;
+}
+
+.search-bar {
+    background: #202327;
+    padding: 12px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.trends {
+    background: #16181c;
+    border-radius: 16px;
+    padding: 15px;
+}
+
+.trend-item {
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.trend-item:hover {
+    background-color: #2c2f33;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    /* Espace entre l'icône et le texte */
+    padding: 12px 25px;
+    margin: 4px 0;
+    font-size: 19px;
+    /* Taille plus proche de l'original */
+    border-radius: 9999px;
+    transition: background 0.2s;
+}
+
+.nav-item i {
+    font-size: 24px;
+    /* Agrandit un peu les icônes */
+    width: 30px;
+    text-align: center;
+}
+
+/* Ce bloc gère la zone de saisie "Quoi de neuf ?" */
+textarea#tweetInput {
+    width: 100%;
+    min-height: 50px;
+    background: transparent;
+    /* Rend le champ invisible sur le fond noir */
+    border: none;
+    /* Supprime le cadre moche */
+    color: white;
+    font-size: 20px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    /* Supprime le contour bleu quand on clique */
+    padding: 10px 0;
+}
+
+/* Change la couleur du texte "Quoi de neuf ?" */
+textarea#tweetInput::placeholder {
+    color: #71767b;
+}
+
+.settings-container {
+    max-width: 600px;
+}
+
+.settings-group h3 {
+    padding: 20px 15px 10px;
+    font-size: 18px;
+    color: var(--main-text-color);
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    gap: 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-item:hover:not(.no-hover) {
+    background-color: var(--hover-color);
+}
+
+.settings-text {
+    flex: 1;
+}
+
+.settings-text p {
+    color: var(--secondary-text);
+    font-size: 13px;
+}
+
+.arrow {
+    color: var(--secondary-text);
+    font-size: 12px;
+}
+
+/* Options de Thème */
+.theme-options {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.light-btn {
+    background: white;
+    color: black;
+}
+
+.dim-btn {
+    background: #15202b;
+    color: white;
+}
+
+.dark-btn {
+    background: black;
+    color: white;
+}
+
+/* Pastilles de couleurs */
+.color-options {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+}
+
+.color-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.2);
+}
+
+.blue {
+    background: #1d9bf0;
+}
+
+.yellow {
+    background: #ffd400;
+}
+
+.pink {
+    background: #f91880;
+}
+
+.purple {
+    background: #7856ff;
+}
+
+.orange {
+    background: #ff7a00;
+}
+
+/* Cible le texte en bas de la page de connexion */
+#loginSection p {
+    margin-top: 35px !important;
+    /* Un grand espace pour que ce ne soit plus collé */
+    text-align: center;
+    color: #71767b;
+    /* Couleur grise standard X */
+    font-size: 15px;
+}
+
+/* Style pour le mot "S'inscrire" */
+#loginSection p span {
+    color: #1d9bf0;
+    /* Bleu X */
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+#loginSection p span:hover {
+    text-decoration: underline;
+}
+
+/* S'applique à toutes les images et vidéos postées */
+.post-media img,
+.post-media video {
+    width: 100%;
+    /* Prend toute la largeur de la colonne */
+    max-width: 100%;
+    /* Ne dépasse jamais le parent */
+    height: auto;
+    /* Garde les proportions d'origine */
+    border-radius: 16px;
+    /* Look arrondi standard de X */
+    border: 1px solid #333;
+    margin-top: 10px;
+    display: block;
+    /* Évite les espaces vides en dessous */
+}
+
+/* AJOUTE ceci à la suite de tes autres .nav-item */
+.logout-item {
+    margin-top: auto;
+    /* Utile si ta sidebar est en display: flex */
+    color: #71767b;
+    /* Gris par défaut */
+}
+
+.logout-item:hover {
+    background-color: rgba(244, 33, 46, 0.1) !important;
+}
+
+.logout-item:hover i,
+.logout-item:hover span {
+    color: #f4212e !important;
+    /* Rouge X pour la déconnexion */
+}
+
+/* ===================================================
+   CORRECTIF MOBILE FINAL - NETLIFY & LIVE SERVER
+   =================================================== */
+/* On utilise 'html body' pour être plus prioritaire que n'importe quelle autre règle */
+@media screen and (max-width: 850px) {
+    html body .welcome-container {
+        display: flex !important;
+        flex-direction: column !important;
+        /* Force l'empilement */
+        height: auto !important;
+        min-height: 100dvh !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    html body .welcome-left,
+    html body .logo-side {
+        width: 100% !important;
+        height: auto !important;
+        flex: none !important;
+        padding: 40px 20px !important;
+    }
+
+    html body .big-x {
+        font-size: 60px !important;
+        /* Réduit enfin ce logo énorme */
+    }
+
+    html body .welcome-right,
+    html body .content-side {
+        width: 100% !important;
+        flex: none !important;
+        padding: 20px !important;
+        align-items: flex-start !important;
+        /* Aligne à gauche */
+    }
+
+    html body h1 {
+        font-size: 32px !important;
+        /* Force la réduction du titre */
+        max-width: 100% !important;
+        white-space: normal !important;
+        /* Autorise le texte à aller à la ligne */
+    }
+
+    html body .welcome-right button {
+        width: 100% !important;
+        max-width: 320px !important;
+    }
+}

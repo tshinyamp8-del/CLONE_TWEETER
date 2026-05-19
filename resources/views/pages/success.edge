@@ -1,0 +1,18 @@
+@component('layouts/main')
+<section id="welcomeUserSection" class="section">
+    <div class="auth-section welcome-flow">
+        <i class="fa-brands fa-x-twitter logo-small" style="margin: 0 auto 30px auto; display: block;"></i>
+
+        <h1 id="welcomeTitle">Bienvenue sur X !</h1>
+
+        <p class="welcome-text">
+            Votre compte a été créé avec succés. 
+            Decouvrez à présent ce qui se passe dans le monde avec le réseau social X
+        </p>
+
+        <button class="next-btn" onclick="window.location.href='{{ route('app.home') }}'" style="margin-top: 40px;">
+            C'est parti
+        </button>
+    </div>
+</section>
+@end

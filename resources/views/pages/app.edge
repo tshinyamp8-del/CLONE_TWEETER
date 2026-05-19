@@ -1,0 +1,123 @@
+@component('layouts/main')
+    {{-- SECTION PARAMÈTRES (Reste masquée par défaut) --}}
+    <div id="settingsSection" class="section" style="display: none; padding: 20px; max-width: 600px; margin: 0 auto;">
+        </div>
+
+    {{-- INTERFACE PRINCIPALE EN 3 COLONNES STRUCTURÉES --}}
+    <div id="appContainer" style="display: grid; grid-template-columns: 275px 600px 350px; max-width: 1225px; margin: 0 auto; min-height: 100vh;">
+
+        {{-- 1. COLONNE GAUCHE : SIDEBAR --}}
+        <aside style="border-right: 1px solid #2f3336; padding: 10px 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: sticky; top: 0;">
+            <div class="nav-links">
+                <div style="font-size: 30px; padding: 10px; color: #fff; width: fit-content; cursor: pointer;">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </div>
+                
+                <nav style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                    <button onclick="showPage('home')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-house"></i> <span>Accueil</span>
+                    </button>
+
+                    <button onclick="showPage('profile')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-user"></i> <span>Profil</span>
+                    </button>
+
+                    <button onclick="showPage('explorer')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-magnifying-glass"></i> <span>Explorer</span>
+                    </button>
+
+                    <button onclick="showPage('notifications')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-bell"></i> <span>Notifications</span>
+                    </button>
+
+                    <button onclick="showPage('messages')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-envelope"></i> <span>Messages</span>
+                    </button>
+
+                    <button onclick="showPage('bookmarks')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; background: none; border: none; width: 100%; text-align: left; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-bookmark"></i> <span>Signets</span>
+                    </button>
+
+                    <div onclick="showSection('settingsSection')" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+                        <i class="fa-solid fa-gear"></i> <span>Paramètres</span>
+                    </div>
+
+                    <div onclick="logout()" style="display: flex; align-items: center; gap: 20px; font-size: 20px; color: #fff; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;">
+    <i class="fa-solid fa-right-from-bracket"></i> <span>Se déconnecter</span>
+</div>
+                </nav>
+
+                <button onclick="document.getElementById('tweetInput').focus()" style="background-color: #1d9bf0; color: white; border: none; font-weight: bold; font-size: 17px; width: 100%; padding: 14px; border-radius: 9999px; margin-top: 15px; cursor: pointer;">
+                    Poster
+                </button>
+            </div>
+
+            {{-- Bloc Profil Utilisateur en bas de la sidebar --}}
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px; margin-bottom: 15px;">
+                <div style="background-color: #555; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                    {{ auth.user.username.slice(0, 2).toUpperCase() }}
+                </div>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;">{{ auth.user.username }}</div>
+                    <div style="color: #71767b; font-size: 13px;">@ {{ auth.user.username.toLowerCase().replace(' ', '') }}</div>
+                </div>
+            </div>
+        </aside>
+
+        {{-- 2. COLONNE CENTRALE : FLUX DE CONTENU --}}
+        <main style="border-right: 1px solid #2f3336; min-height: 100vh;">
+            {{-- PAGE ACCUEIL --}}
+            <div id="page-home" class="page-content">
+                <div style="padding: 15px; border-bottom: 1px solid #2f3336; position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 10;">
+                    <h3 style="margin: 0; font-size: 20px; font-family: sans-serif;">Accueil</h3>
+                </div>
+
+                {{-- Zone d'écriture de tweet --}}
+                <div style="display: flex; gap: 12px; padding: 15px; border-bottom: 1px solid #2f3336;">
+                    <div style="background-color: #555; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                        {{ auth.user.username.slice(0, 2).toUpperCase() }}
+                    </div>
+                    <div style="flex: 1;">
+                        <textarea id="tweetInput" placeholder="Quoi de neuf ?" style="width: 100%; background: none; border: none; color: white; font-size: 1.2rem; resize: none; outline: none; min-height: 60px; font-family: sans-serif;"></textarea>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <div style="display: flex; gap: 15px; color: #1d9bf0; font-size: 1.2rem;">
+                                <label for="postImage" style="cursor: pointer;"><i class="fa-regular fa-image"></i></label>
+                                <input type="file" id="postImage" accept="image/*" style="display: none;" onchange="handleMediaSelect(this, 'image')">
+                                
+                                <label for="postVideo" style="cursor: pointer;"><i class="fa-regular fa-file-video"></i></label>
+                                <input type="file" id="postVideo" accept="video/*" style="display: none;" onchange="handleMediaSelect(this, 'video')">
+                            </div>
+                            <button onclick="postTweet()" style="background: #1d9bf0; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                                Poster
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                {{-- Conteneur de Tweets dynamiques --}}
+                <div id="tweetsContainer"></div>
+            </div>
+
+            {{-- Écris tes autres sous-pages cachées ici (profile, explorer, etc.) en gardant leur style="display: none;" au départ --}}
+        </main>
+
+        {{-- 3. COLONNE DROITE : TENDANCES / WHATS HAPPENING --}}
+        <aside style="padding: 10px 20px;">
+            <div style="background: #16181c; padding: 15px; border-radius: 16px; margin-top: 10px; font-family: sans-serif;">
+                <h3 style="margin-top: 0; font-size: 19px; margin-bottom: 15px;">Ce qui se passe</h3>
+                <div style="margin-bottom: 15px;">
+                    <span style="color: #71767b; font-size: 13px;">Technologies · Tendance</span><br>
+                    <strong style="font-size: 15px;">#AdonisJS</strong>
+                </div>
+                <div>
+                    <span style="color: #71767b; font-size: 13px;">Développement · Tendance</span><br>
+                    <strong style="font-size: 15px;">#JavaScript</strong>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    @include('components/edit_profile_modal')
+@end

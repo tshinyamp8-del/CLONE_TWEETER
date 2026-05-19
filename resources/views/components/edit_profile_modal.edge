@@ -1,0 +1,36 @@
+<div id="editProfileModal" class="modal-overlay hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(91, 112, 131, 0.4); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+    <div class="modal-content" style="background: #000; width: 100%; max-width: 600px; border-radius: 16px; max-height: 90vh; overflow-y: auto; border: 1px solid #333;">
+        
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #333;">
+            <div class="header-left" style="display: flex; align-items: center; gap: 20px;">
+                <i class="fa-solid fa-xmark" onclick="closeEditModal()" style="cursor: pointer; font-size: 1.2rem;"></i>
+                <h3 style="margin: 0;">Éditer le profil</h3>
+            </div>
+            <button class="save-btn" onclick="saveProfile()" style="background: white; color: black; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer;">Enregistrer</button>
+        </div>
+
+        <div class="modal-body" style="padding: 15px; display: flex; flex-direction: column; gap: 20px;">
+            <div class="input-group" style="display: flex; flex-direction: column; gap: 5px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">
+                <label style="color: #71767b; font-size: 13px;">Nom</label>
+                <input type="text" id="editName" placeholder="Votre nom" style="background: transparent; border: none; color: white; outline: none; font-size: 16px;">
+            </div>
+
+            <div class="input-group" style="display: flex; flex-direction: column; gap: 5px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">
+                <label style="color: #71767b; font-size: 13px;">Bio</label>
+                <textarea id="editBio" placeholder="Votre bio..." style="background: transparent; border: none; color: white; outline: none; font-size: 16px; resize: none; height: 80px;"></textarea>
+            </div>
+
+            <div class="input-group" style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="color: #71767b; font-size: 14px;">Image de bannière</label>
+                <input type="file" id="editBannerFile" accept="image/*" style="padding-top: 5px; border: none; color: #71767b;">
+                <p style="font-size: 11px; color: #71767b; margin: 0;">Format recommandé : rectangulaire (1500x500)</p>
+            </div>
+
+            <div class="input-group" style="display: flex; flex-direction: column; gap: 5px;">
+                <label for="editPhotoFile" style="color: #71767b; font-size: 14px;">Photo de profil (Format Carré)</label>
+                <input type="file" id="editPhotoFile" accept="image/*" onchange="handleProfilePreview(this)" style="color: #71767b;">
+            </div>
+        </div>
+
+    </div>
+</div>

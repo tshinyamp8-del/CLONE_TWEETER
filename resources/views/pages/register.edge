@@ -1,0 +1,51 @@
+@component('layouts/main')
+<section id="registerSection" class="auth-section">
+  <i class="fa-brands fa-x-twitter logo-small"></i>
+  <h2>Créer votre compte</h2>
+  
+  {{-- 1. Ajout du formulaire pointant vers la route POST de ton contrôleur --}}
+  <form action="{{ route('signup.store') }}" method="POST">
+    
+    {{-- Protection CSRF obligatoire dans AdonisJS --}}
+    {{ csrfField() }}
+
+    {{-- 2. Ajout de l'attribut name="username" --}}
+    <input id="registerName" type="text" name="username" placeholder="Nom" required>
+    
+    {{-- 2. Ajout de l'attribut name="email" --}}
+    <input id="registerEmail" type="email" name="email" placeholder="Email" required>
+    
+    <div class="password-container" style="position: relative; width: 100%;">
+      {{-- 2. Ajout de l'attribut name="password" --}}
+      <input id="registerPassword" type="password" name="password" placeholder="Mot de passe" style="width: 100%; padding-right: 40px;" required>
+      <i class="fa-regular fa-eye" id="toggleRegisterPassword" onclick="togglePassword('registerPassword', 'toggleRegisterPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #71767b;"></i>
+    </div>
+
+    <label class="dob-label">Date de naissance</label>
+    <div class="dob-container">
+        <input type="number" id="birthDay" placeholder="Jour">
+        <select id="birthMonth">
+            <option value="">Mois</option>
+            <option>Janvier</option>
+            <option>Février</option>
+            <option>Mars</option>
+            <option>Avril</option>
+            <option>Mai</option>
+            <option>Juin</option>
+            <option>Juillet</option>
+            <option>Août</option>
+            <option>Septembre</option>
+            <option>Octobre</option>
+            <option>Novembre</option>
+            <option>Décembre</option>
+        </select>
+        <input type="number" id="birthYear" placeholder="Année">
+    </div>
+
+    {{-- 3. Changement du bouton en type="submit" et retrait du onclick --}}
+    <button type="submit" class="next-btn">
+        Suivant
+    </button>
+  </form>
+</section>
+@end

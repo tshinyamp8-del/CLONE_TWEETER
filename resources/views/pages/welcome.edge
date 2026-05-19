@@ -1,0 +1,25 @@
+@component('layouts/main')
+<section id="welcomeSection" class="welcome-container">
+    <div class="welcome-left">
+        <i class="fa-brands fa-x-twitter big-x"></i>
+    </div>
+    <div class="welcome-right">
+        <h1>Ça se passe maintenant</h1>
+        <h2>Inscrivez-vous.</h2>
+        
+        <button class="google-btn">
+            <i class="fa-brands fa-google"></i> S'inscrire avec Google
+        </button>
+        
+        <button class="create-btn" onclick="window.location.href='/signup'">
+            Créez votre compte
+        </button>
+
+        <p class="login-text-small">Vous avez déjà un compte ?</p>
+        
+        <button class="login-btn" onclick="window.location.href='/login'">
+            Se connecter
+        </button>
+    </div>
+</section>
+@end

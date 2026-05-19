@@ -1,0 +1,26 @@
+@component('layouts/main')
+<section id="loginSection" class="auth-section">
+    <i class="fa-brands fa-x-twitter logo-small"></i>
+    <h2>Connectez-vous à X</h2>
+    
+    {{-- 1. Correction de l'action vers la bonne route --}}
+    <form action="{{ route('login.store') }}" method="POST">
+        
+        {{-- 2. Ajout du champ de sécurité CSRF --}}
+        {{ csrfField() }}
+
+        {{-- Correction du name en "email" pour s'aligner sur le contrôleur --}}
+        <input id="loginEmail" name="email" type="email" placeholder="Email" required>
+        
+        <div class="password-container" style="position: relative; width: 100%;">
+            <input id="loginPassword" name="password" type="password" placeholder="Mot de passe" style="width: 100%; padding-right: 40px;" required>
+            <i class="fa-regular fa-eye" id="toggleLoginPassword" onclick="togglePassword('loginPassword', 'toggleLoginPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #71767b; font-size: 1.1rem;"></i>
+        </div>
+
+        {{-- 3. Changement du type en "submit" et retrait du onclick --}}
+        <button type="submit" class="next-btn">Se connecter</button>
+    </form>
+    
+    <p>Pas de compte ? <a href="{{ route('signup') }}" class="link-text" style="text-decoration: none; color: #1d9bf0;">S'inscrire</a></p>
+</section>
+@end
