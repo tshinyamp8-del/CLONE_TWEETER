@@ -2,25 +2,30 @@
 |--------------------------------------------------------------------------
 | HTTP server entrypoint
 |--------------------------------------------------------------------------
-|
-| The "server.ts" file is the entrypoint for starting the AdonisJS HTTP
-| server. Either you can run this file directly or use the "serve"
-| command to run this file and monitor file changes
-|
 */
+import 'reflect-metadata'
+import http from 'node:http' // 🌟 Module natif Node.js
 
-await import('reflect-metadata')
+// 🌟 FORCAGE GLOBAL : On dit à Node.js de supprimer les timeouts par défaut
+// sur absolument TOUS les serveurs HTTP créés dans cette instance (Adonis inclus)
+http.createServer = ((originalCreateServer) => {
+  return function (this: any, ...args: any[]) {
+    const server = originalCreateServer.apply(this, args)
+    server.timeout = 0         // Temps infini pour ta vidéo de 60 min
+    server.headersTimeout = 0  // Désactive le timeout des en-têtes
+    return server
+  }
+})(http.createServer)
+
 const { Ignitor, prettyPrintError } = await import('@adonisjs/core')
 
 /**
- * URL to the application root. AdonisJS need it to resolve
- * paths to file and directories for scaffolding commands
+ * URL to the application root.
  */
 const APP_ROOT = new URL('../', import.meta.url)
 
 /**
- * The importer is used to import files in context of the
- * application.
+ * The importer is used to import files in context of the application.
  */
 const IMPORTER = (filePath: string) => {
   if (filePath.startsWith('./') || filePath.startsWith('../')) {
@@ -29,6 +34,7 @@ const IMPORTER = (filePath: string) => {
   return import(filePath)
 }
 
+// 🌟 Retour à ton code d'origine propre, sans hooks instables
 new Ignitor(APP_ROOT, { importer: IMPORTER })
   .tap((app) => {
     app.booting(async () => {

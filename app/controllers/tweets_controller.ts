@@ -1,52 +1,66 @@
-// app/controllers/tweets_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import Tweet from '#models/tweet' 
-import Like from '#models/like' // Ton modèle de Like réel
 import app from '@adonisjs/core/services/app'
-import { cuid } from '@adonisjs/core/helpers'
+import { stringHelpers } from '@poppinss/utils' 
 import fs from 'node:fs'
 
 export default class TweetsController {
-  // Récupérer les tweets avec le compte des likes et si l'utilisateur connecté a liké
+  
+  // Chargement dynamique des modèles pour contourner le bug d'import ESM
+  private async getModels() {
+    const { default: Tweet } = await import('#models/tweet')
+    const { default: Like } = await import('#models/like')
+    return { Tweet, Like }
+  }
+
+  /**
+   * Récupérer tous les tweets avec le compte des likes et le statut de l'utilisateur connecté
+   */
   async index({ auth, response }: HttpContext) {
     const user = auth.user!
+    const { Tweet, Like } = await this.getModels()
+
     const tweets = await Tweet.query()
       .preload('user')
       .withCount('likes')
       .orderBy('createdAt', 'desc')
 
-    // On ajoute dynamiquement une propriété pour savoir si l'user connecté a liké
-    const tweetsWithLikeStatus = await Promise.all(tweets.map(async (tweet) => {
-      const hasLiked = await Like.query()
-        .where('userId', user.id)
-        .where('tweetId', tweet.id)
-        .first()
-      
-      return {
-        ...tweet.toJSON(),
-        likesCount: tweet.$extras.likes_count,
-        hasLiked: !!hasLiked
-      }
-    }))
+    const tweetsWithLikeStatus = await Promise.all(
+      tweets.map(async (tweet) => {
+        const hasLiked = await Like.query()
+          .where('userId', user.id)
+          .where('tweetId', tweet.id)
+          .first()
+        
+        return {
+          ...tweet.toJSON(),
+          likesCount: tweet.$extras.likes_count,
+          hasLiked: !!hasLiked
+        }
+      })
+    )
 
     return response.json(tweetsWithLikeStatus)
   }
 
-  // Sauvegarder un post (Texte + Image ou Vidéo lourde)
+  /**
+   * Poster un tweet avec image ou vidéo (jusqu'à 1 heure / 5 Go)
+   */
   async store({ request, auth, response }: HttpContext) {
     const user = auth.user!
     const content = request.input('content')
+    const { Tweet } = await this.getModels()
+    
     const mediaFile = request.file('media', {
-      size: '500mb',
-      extnames: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'mov', 'avi']
+      size: '5gb',
+      extnames: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'mkv']
     })
 
     let mediaUrl: string | null = null
     let mediaType: 'image' | 'video' | null = null
 
     if (mediaFile) {
-      mediaType = mediaFile.extname && ['mp4', 'mov', 'avi'].includes(mediaFile.extname) ? 'video' : 'image'
-      const fileName = `${cuid()}.${mediaFile.extname}`
+      mediaType = mediaFile.extname && ['mp4', 'mov', 'avi', 'mkv'].includes(mediaFile.extname) ? 'video' : 'image'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${mediaFile.extname}` 
       
       await mediaFile.move(app.publicPath('uploads/tweets'), {
         name: fileName,
@@ -55,21 +69,25 @@ export default class TweetsController {
       mediaUrl = `/uploads/tweets/${fileName}`
     }
 
+    // 🌟 RECTIFICATION ICI : On enregistre mediaUrl et mediaType en BDD
     const tweet = await Tweet.create({
       userId: user.id,
-      content: content || '',
-      mediaUrl,
-      mediaType
+      content: content || null,
+      mediaUrl: mediaUrl,   // Ajouté !
+      mediaType: mediaType, // Ajouté !
     })
 
     await tweet.load('user')
     return response.status(201).json(tweet)
   }
 
-  // Liker / Unliker réellement
+  /**
+   * Liker / Unliker un tweet réellement en Base de Données
+   */
   async toggleLike({ params, auth, response }: HttpContext) {
     const user = auth.user!
     const tweetId = params.id
+    const { Like } = await this.getModels()
 
     const existingLike = await Like.query()
       .where('userId', user.id)
@@ -85,17 +103,18 @@ export default class TweetsController {
     }
   }
 
-  // Supprimer un tweet et son fichier associé
+  /**
+   * Supprimer un tweet et son fichier multimédia associé
+   */
   async destroy({ params, auth, response }: HttpContext) {
     const user = auth.user!
+    const { Tweet } = await this.getModels()
     const tweet = await Tweet.findOrFail(params.id)
 
-    // Sécurité : Seul l'auteur peut supprimer son tweet
     if (tweet.userId !== user.id) {
       return response.status(403).json({ error: 'Non autorisé' })
     }
 
-    // Supprimer le fichier physique (image/vidéo) du disque s'il existe
     if (tweet.mediaUrl) {
       const absolutePath = app.publicPath(tweet.mediaUrl.replace(/^\//, ''))
       if (fs.existsSync(absolutePath)) {

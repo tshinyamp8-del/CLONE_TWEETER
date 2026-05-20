@@ -1,27 +1,35 @@
 /************************************************
  * ETAT GLOBAL & INITIALISATION
  ************************************************/
-let currentUser = null; // Sera récupéré dynamiquement depuis la session AdonisJS
-let selectedMediaFile = null; // Contiendra le vrai fichier binaire (Image/Vidéo)
+let currentUser = null; 
+let selectedMediaFile = null; 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Charger l'utilisateur connecté depuis la session serveur
+    // 1. On récupère d'abord l'utilisateur connecté
     await fetchCurrentUser();
-    // 2. Charger les thèmes et accents stockés localement
+    // 2. On charge le thème visuel
     initThemeAndAccent();
-    // 3. Charger les vrais tweets et utilisateurs depuis la BDD
-    await loadTweets();
-    await loadUsers();
+    
+    // 3. Sécurité : On ne charge les tweets QUE si on a un utilisateur connecté
+    if (currentUser) {
+        await loadTweets();
+        await loadUsers();
+    } else {
+        console.warn("Aucun utilisateur connecté détecté. En attente de connexion...");
+    }
 });
 
 async function fetchCurrentUser() {
     try {
-        const response = await fetch('/api/me'); // Route optionnelle à créer, ou injectée par Edge
+        // 💡 Assure-toi que cette route existe dans ton start/routes.ts (ex: /me ou /api/me)
+        const response = await fetch('/api/me');
         if (response.ok) {
             currentUser = await response.json();
             updateProfileUI();
             updateSidebarProfile();
             updateFollowStats();
+        } else {
+            console.log("L'utilisateur n'est pas connecté au backend.");
         }
     } catch (e) {
         console.error("Impossible de récupérer l'utilisateur connecté", e);
@@ -41,7 +49,7 @@ function showSection(sectionId) {
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.remove('hidden');
-        target.style.display = (sectionId === 'appContainer') ? 'grid' : 'block'; // 'grid' pour nos 3 colonnes
+        target.style.display = (sectionId === 'appContainer') ? 'grid' : 'block';
     }
 }
 
@@ -56,23 +64,23 @@ function showPage(pageName) {
 }
 
 /************************************************
- * TWEETS & ULTRA-LARGE MÉDIAS (JUSQU'À 1H)
+ * TWEETS & ULTRA-LARGE MÉDIAS (JUSQU'À 5 GO)
  ************************************************/
 function handleMediaSelect(input, type) {
     const file = input.files[0];
     if (!file) return;
 
-    selectedMediaFile = file; // Stockage du vrai fichier binaire
+    selectedMediaFile = file;
     
     const container = document.getElementById('mediaPreview');
     const preview = document.getElementById('previewContent');
     
     if (container) container.classList.remove('hidden');
     if (preview) {
-        const fileURL = URL.createObjectURL(file); // Génère une URL locale temporaire ultra-légère
+        const fileURL = URL.createObjectURL(file);
         preview.innerHTML = (type === 'image')
-            ? `<img src="${fileURL}" style="width:100%; border-radius:15px;">`
-            : `<video controls style="width:100%; border-radius:15px;"><source src="${fileURL}"></video>`;
+            ? `<img src="${fileURL}" style="width:100%; border-radius:15px; max-height:300px; object-fit:cover;">`
+            : `<video controls style="width:100%; border-radius:15px; max-height:300px;"><source src="${fileURL}"></video>`;
     }
 }
 
@@ -82,32 +90,44 @@ function clearMedia() {
     const previewInputVid = document.getElementById('postVideo');
     if (previewInputImg) previewInputImg.value = '';
     if (previewInputVid) previewInputVid.value = '';
-    document.getElementById('mediaPreview').classList.add('hidden');
+    
+    const mediaPreviewZone = document.getElementById('mediaPreview');
+    if (mediaPreviewZone) mediaPreviewZone.classList.add('hidden');
 }
 
-// Publication réelle avec jauge de progression pour les gros fichiers
 function postTweet() {
     const input = document.getElementById('tweetInput');
-    const content = input.value.trim();
-    const button = document.querySelector('.btn-post-main');
+    const content = input ? input.value.trim() : "";
+    
+    const button = document.querySelector('.btn-post-main') || 
+                   document.querySelector("button[onclick='postTweet()']") || 
+                   document.querySelector("button[onclick='window.postTweet()']");
 
     if (!content && !selectedMediaFile) return;
 
     const formData = new FormData();
     formData.append('content', content);
     if (selectedMediaFile) {
-        formData.append('media', selectedMediaFile); // Envoi du fichier brut au serveur
+        formData.append('media', selectedMediaFile); // Correspond à request.file('media')
     }
 
-    button.disabled = true;
-    button.innerText = "Envoi... 0%";
+    if (button) {
+        button.disabled = true;
+        button.innerText = "Envoi... 0%";
+    }
 
     const xhr = new XMLHttpRequest();
+    // 🌟 SYNCHRONISATION : Redirection vers l'URL exacte gérée par ton contrôleur
     xhr.open("POST", "/api/tweets");
 
-    // Calcul de la progression (Crucial pour les vidéos de 1h)
+    // Gestion du token CSRF d'AdonisJS Shield si présent
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+        xhr.setRequestHeader('x-csrf-token', csrfToken);
+    }
+
     xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
+        if (event.lengthComputable && button) {
             const percent = Math.round((event.loaded / event.total) * 100);
             button.innerText = `Envoi... ${percent}%`;
         }
@@ -115,20 +135,24 @@ function postTweet() {
 
     xhr.onload = async () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-            input.value = "";
+            if (input) input.value = "";
             clearMedia();
-            await loadTweets(); // Rechargement dynamique depuis la BDD
+            await loadTweets(); // Recharge le fil d'actu avec le nouveau média inclus
         } else {
-            alert("Erreur lors de l'envoi du post (fichier trop lourd ou timeout).");
+            alert("Erreur lors de l'envoi du post. Vérifie tes logs serveurs.");
         }
-        button.disabled = false;
-        button.innerText = "Poster";
+        if (button) {
+            button.disabled = false;
+            button.innerText = "Poster";
+        }
     };
 
     xhr.onerror = () => {
         alert("Erreur réseau lors du téléversement.");
-        button.disabled = false;
-        button.innerText = "Poster";
+        if (button) {
+            button.disabled = false;
+            button.innerText = "Poster";
+        }
     };
 
     xhr.send(formData);
@@ -139,21 +163,29 @@ async function loadTweets() {
     if (!container) return;
 
     try {
+        // 🌟 SYNCHRONISATION : Appel direct du point d'entrée de ton contrôleur
         const response = await fetch('/api/tweets');
+        
+        if (!response.ok) {
+            container.innerHTML = "<p style='padding:20px; color:#71767b;'>Veuillez vous connecter pour voir les tweets.</p>";
+            return;
+        }
+
         const tweets = await response.json();
         container.innerHTML = "";
 
         tweets.forEach(tweet => {
             let mediaHTML = "";
+            
+            // 🌟 Utilisation dynamique des nouvelles propriétés du modèle mis à jour
             if (tweet.mediaUrl) {
                 mediaHTML = (tweet.mediaType === 'video')
-                    ? `<video controls style="width:100%; border-radius:15px; max-height:400px;"><source src="${tweet.mediaUrl}"></video>`
-                    : `<img src="${tweet.mediaUrl}" style="width:100%; border-radius:15px; max-height:500px; object-fit:cover;">`;
+                    ? `<div style="margin-top:10px; background:#000; border-radius:15px; overflow:hidden;"><video controls style="width:100%; max-height:400px; display:block;"><source src="${tweet.mediaUrl}"></video></div>`
+                    : `<div style="margin-top:10px; border-radius:15px; overflow:hidden;"><img src="${tweet.mediaUrl}" style="width:100%; max-height:500px; object-fit:cover; display:block;"></div>`;
             }
 
-            // Vérification si l'utilisateur actuel a le droit de le supprimer
             const deleteIcon = (currentUser && tweet.userId === currentUser.id) 
-                ? `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer;"></i>` 
+                ? `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer; color:#71767b;"></i>` 
                 : '';
 
             const div = document.createElement('div');
@@ -161,16 +193,16 @@ async function loadTweets() {
             div.style.borderBottom = "1px solid #2f3336";
             div.innerHTML = `
                 <div style="display:flex; gap:12px; padding:15px; font-family:sans-serif;">
-                    <img src="${tweet.user.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%;">
+                    <img src="${tweet.user?.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
                     <div style="flex:1">
                         <div style="display:flex; justify-content:space-between;">
                             <div>
-                                <strong style="color:#fff;">${tweet.user.username}</strong>
-                                <span style="color:#71767b; margin-left:5px;">@${tweet.user.username.toLowerCase().replace(/\s/g, '')}</span>
+                                <strong style="color:#fff;">${tweet.user?.username || 'Anonyme'}</strong>
+                                <span style="color:#71767b; margin-left:5px;">@${(tweet.user?.username || 'anonyme').toLowerCase().replace(/\s/g, '')}</span>
                             </div>
                             ${deleteIcon}
                         </div>
-                        <p style="color:#fff; margin: 5px 0; white-space: pre-wrap;">${tweet.content}</p>
+                        <p style="color:#fff; margin: 5px 0; white-space: pre-wrap;">${tweet.content || ''}</p>
                         ${mediaHTML}
                         <div style="margin-top:10px;">
                             <button onclick="toggleLike(${tweet.id})" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}">
@@ -189,8 +221,9 @@ async function loadTweets() {
 
 async function toggleLike(id) {
     try {
+        // 🌟 SYNCHRONISATION : Route mappée sur la méthode toggleLike
         const response = await fetch(`/api/tweets/${id}/like`, { method: 'POST' });
-        if (response.ok) await loadTweets(); // Rafraîchit les compteurs de likes réels
+        if (response.ok) await loadTweets();
     } catch (e) {
         console.error(e);
     }
@@ -199,6 +232,7 @@ async function toggleLike(id) {
 async function deleteTweet(tweetId) {
     if (confirm("Supprimer ce post définitivement ?")) {
         try {
+            // 🌟 SYNCHRONISATION : Route mappée sur la méthode destroy
             const response = await fetch(`/api/tweets/${tweetId}`, { method: 'DELETE' });
             if (response.ok) await loadTweets();
         } catch (e) {
@@ -211,24 +245,28 @@ async function deleteTweet(tweetId) {
  * GESTION DU PROFIL (RÉEL)
  ************************************************/
 async function saveProfile() {
-    const nameVal = document.getElementById('editName').value;
-    const bioVal = document.getElementById('editBio').value;
+    const nameInput = document.getElementById('editName');
+    const bioInput = document.getElementById('editBio');
     const bannerInput = document.getElementById('editBannerFile');
     const photoInput = document.getElementById('editPhotoFile');
 
+    if (!nameInput) return;
+
     const formData = new FormData();
-    formData.append('username', nameVal);
-    formData.append('bio', bioVal);
+    formData.append('username', nameInput.value);
+    if (bioInput) formData.append('bio', bioInput.value);
     
-    if (photoInput.files[0]) formData.append('avatar', photoInput.files[0]);
-    if (bannerInput.files[0]) formData.append('banner', bannerInput.files[0]);
+    if (photoInput && photoInput.files[0]) formData.append('avatar', photoInput.files[0]);
+    if (bannerInput && bannerInput.files[0]) formData.append('banner', bannerInput.files[0]);
 
     try {
-        const response = await fetch('/api/profile', {
-            method: 'PUT',
-            body: formData
+        const response = await fetch('/api/profile', { 
+            method: 'PUT', 
+            body: formData,
+            headers: {
+                'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
         });
-
         if (response.ok) {
             currentUser = await response.json();
             updateProfileUI();
@@ -262,7 +300,7 @@ function updateSidebarProfile() {
     if (!container || !currentUser) return;
 
     container.innerHTML = `
-        <img src="${currentUser.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%;">
+        <img src="${currentUser.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
         <div style="margin-left:10px">
             <strong style="display:block; color:#fff;">${currentUser.username}</strong>
             <span style="color:#71767b">@${currentUser.username.toLowerCase().replace(/\s/g, '')}</span>
@@ -270,34 +308,32 @@ function updateSidebarProfile() {
     `;
 }
 
-/************************************************
- * DÉCONNEXION OFFICIELLE BACKEND
- ************************************************/
 async function logout() {
     if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
         try {
-            const response = await fetch('/api/logout', { method: 'POST' });
-            if (response.ok) {
-                window.location.href = '/login'; // Te renvoie sur ta page de connexion réelle
-            }
-        } catch (e) {
-            window.location.reload();
-        }
+            const response = await fetch('/api/logout', { 
+                method: 'POST',
+                headers: {
+                    'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+            if (response.ok) window.location.href = '/login';
+        } catch (e) { window.location.reload(); }
     }
 }
 
-/************************************************
- * FONCTIONS AUXILIAIRES RESTANTES (CONSERVÉES)
- ************************************************/
 function openEditModal() {
     const modal = document.getElementById('editProfileModal');
     if (modal && currentUser) {
         modal.classList.remove('hidden');
-        document.getElementById('editName').value = currentUser.username;
-        document.getElementById('editBio').value = currentUser.bio || '';
+        if (document.getElementById('editName')) document.getElementById('editName').value = currentUser.username;
+        if (document.getElementById('editBio')) document.getElementById('editBio').value = currentUser.bio || '';
     }
 }
-function closeEditModal() { document.getElementById('editProfileModal').classList.add('hidden'); }
+function closeEditModal() { 
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.add('hidden'); 
+}
 
 function initThemeAndAccent() {
     const savedColor = localStorage.getItem('twitter-clone-color');
@@ -311,15 +347,31 @@ function setAccent(colorCode) { document.documentElement.style.setProperty('--br
 function togglePassword(inputId, iconId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = document.getElementById(iconId);
+    if (!passwordInput) return;
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        toggleIcon.className = 'fa-solid fa-eye-slash';
+        if (toggleIcon) toggleIcon.className = 'fa-solid fa-eye-slash';
     } else {
         passwordInput.type = 'password';
-        toggleIcon.className = 'fa-regular fa-eye';
+        if (toggleIcon) toggleIcon.className = 'fa-regular fa-eye';
     }
 }
 
-// Fonctions vides temporaires pour éviter les crashs si tes autres sections s'activent
+// EXPOSITIONS GLOBAL AUX WINDOWS (Règle l'erreur "not defined" dans l'HTML)
+window.showSection = showSection;
+window.showPage = showPage;
+window.handleMediaSelect = handleMediaSelect;
+window.clearMedia = clearMedia;
+window.postTweet = postTweet;
+window.toggleLike = toggleLike;
+window.deleteTweet = deleteTweet;
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
+window.saveProfile = saveProfile;
+window.setTheme = setTheme;
+window.setAccent = setAccent;
+window.logout = logout;
+window.togglePassword = togglePassword;
+
 async function loadUsers() {}
 function updateFollowStats() {}

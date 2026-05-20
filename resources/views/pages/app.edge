@@ -78,21 +78,29 @@
                         {{ auth.user.username.slice(0, 2).toUpperCase() }}
                     </div>
                     <div style="flex: 1;">
-                        <textarea id="tweetInput" placeholder="Quoi de neuf ?" style="width: 100%; background: none; border: none; color: white; font-size: 1.2rem; resize: none; outline: none; min-height: 60px; font-family: sans-serif;"></textarea>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                            <div style="display: flex; gap: 15px; color: #1d9bf0; font-size: 1.2rem;">
-                                <label for="postImage" style="cursor: pointer;"><i class="fa-regular fa-image"></i></label>
-                                <input type="file" id="postImage" accept="image/*" style="display: none;" onchange="handleMediaSelect(this, 'image')">
-                                
-                                <label for="postVideo" style="cursor: pointer;"><i class="fa-regular fa-file-video"></i></label>
-                                <input type="file" id="postVideo" accept="video/*" style="display: none;" onchange="handleMediaSelect(this, 'video')">
-                            </div>
-                            <button onclick="postTweet()" style="background: #1d9bf0; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                                Poster
-                            </button>
-                        </div>
-                    </div>
+    <textarea id="tweetInput" placeholder="Quoi de neuf ?" style="width: 100%; background: none; border: none; color: white; font-size: 1.2rem; resize: none; outline: none; min-height: 60px; font-family: sans-serif;"></textarea>
+    
+    <div id="mediaPreview" class="hidden" style="margin-top: 10px; max-height: 300px; overflow: hidden; border-radius: 15px; position: relative; background: #15181c;">
+        <div id="previewContent"></div>
+        
+        <button type="button" onclick="clearMedia()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; z-index: 10;">
+            ✕
+        </button>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div style="display: flex; gap: 15px; color: #1d9bf0; font-size: 1.2rem;">
+            <label for="postImage" style="cursor: pointer;"><i class="fa-regular fa-image"></i></label>
+            <input type="file" id="postImage" accept="image/*" style="display: none;" onchange="handleMediaSelect(this, 'image')">
+            
+            <label for="postVideo" style="cursor: pointer;"><i class="fa-regular fa-file-video"></i></label>
+            <input type="file" id="postVideo" accept="video/*" style="display: none;" onchange="handleMediaSelect(this, 'video')">
+        </div>
+        <button type="button" onclick="postTweet()" style="background: #1d9bf0; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 15px;">
+            Poster
+        </button>
+    </div>
+</div>
                 </div>
                 
                 {{-- Conteneur de Tweets dynamiques --}}

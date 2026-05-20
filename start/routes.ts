@@ -27,6 +27,9 @@ router.group(() => {
 }).use(middleware.auth())
 
 router.group(() => {
+  // Récupérer l'utilisateur connecté actuellement
+  router.get('/me', async ({ auth, response }) => response.json(auth.user))
+
   // Flux & Publication
   router.get('/tweets', [TweetsController, 'index'])
   router.post('/tweets', [TweetsController, 'store'])
@@ -37,4 +40,4 @@ router.group(() => {
   
   // Édition de profil
   router.put('/profile', [ProfileController, 'update'])
-}).use(middleware.auth()).prefix('/api') // Protégé par ton middleware d'authentification officiel
+}).use(middleware.auth()).prefix('/api')

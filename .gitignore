@@ -4,6 +4,10 @@ build
 tmp/*
 !tmp/.gitkeep
 
+# 🌟 EXCLUSION DES MÉDIAS (Ajouté pour bloquer tes vidéos lourdes)
+public/uploads/
+public/uploads/tweets/*
+
 # Secrets
 .env
 .env.local
