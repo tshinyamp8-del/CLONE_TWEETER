@@ -357,6 +357,29 @@ function togglePassword(inputId, iconId) {
     }
 }
 
+function togglePasswordVisibility(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const eyeIcon = document.getElementById(iconId);
+
+    if (!passwordInput || !eyeIcon) return;
+
+    if (passwordInput.type === 'password') {
+        // 1. On change le type en text pour afficher le mot de passe
+        passwordInput.type = 'text';
+        
+        // 2. On change l'icône FontAwesome pour l'œil barré (eye-slash)
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+    } else {
+        // 1. On remet le type en password pour masquer
+        passwordInput.type = 'password';
+        
+        // 2. On remet l'icône de l'œil normal
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+    }
+}
+
 // EXPOSITIONS GLOBAL AUX WINDOWS (Règle l'erreur "not defined" dans l'HTML)
 window.showSection = showSection;
 window.showPage = showPage;

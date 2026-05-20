@@ -12,10 +12,31 @@
         {{-- Correction du name en "email" pour s'aligner sur le contrôleur --}}
         <input id="loginEmail" name="email" type="email" placeholder="Email" required>
         
-        <div class="password-container" style="position: relative; width: 100%;">
-            <input id="loginPassword" name="password" type="password" placeholder="Mot de passe" style="width: 100%; padding-right: 40px;" required>
-            <i class="fa-regular fa-eye" id="toggleLoginPassword" onclick="togglePassword('loginPassword', 'toggleLoginPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #71767b; font-size: 1.1rem;"></i>
-        </div>
+        <div class="password-container" style="position: relative; width: 100%; display: block; box-sizing: border-box;">
+  
+  {{-- 🌟 L'input du Login avec les mêmes paddings exacts --}}
+  <input 
+    id="loginPassword" 
+    type="password" 
+    name="password" 
+    placeholder="Mot de passe" 
+    style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
+    required
+  >
+  
+  {{-- 🌟 La zone de l'œil avec les ID adaptés pour le Login --}}
+  <span 
+    onclick="togglePassword('loginPassword', 'toggleLoginPassword')" 
+    style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+  >
+    <i 
+      class="fa-regular fa-eye" 
+      id="toggleLoginPassword" 
+      style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"
+    ></i>
+  </span>
+
+</div>
 
         {{-- 3. Changement du type en "submit" et retrait du onclick --}}
         <button type="submit" class="next-btn">Se connecter</button>

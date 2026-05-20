@@ -15,11 +15,30 @@
     {{-- 2. Ajout de l'attribut name="email" --}}
     <input id="registerEmail" type="email" name="email" placeholder="Email" required>
     
-    <div class="password-container" style="position: relative; width: 100%;">
-      {{-- 2. Ajout de l'attribut name="password" --}}
-      <input id="registerPassword" type="password" name="password" placeholder="Mot de passe" style="width: 100%; padding-right: 40px;" required>
-      <i class="fa-regular fa-eye" id="toggleRegisterPassword" onclick="togglePassword('registerPassword', 'toggleRegisterPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #71767b;"></i>
-    </div>
+    <div class="password-container" style="position: relative; width: 100%; display: block; box-sizing: border-box;">
+  
+  <input 
+    id="registerPassword" 
+    type="password" 
+    name="password" 
+    placeholder="Mot de passe" 
+    style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
+    required
+  >
+  
+  {{-- 🌟 ZONE DE CENTRAGE ABSOLU ET FORCÉ --}}
+  <span 
+    onclick="togglePassword('registerPassword', 'toggleRegisterPassword')" 
+    style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+  >
+    <i 
+      class="fa-regular fa-eye" 
+      id="toggleRegisterPassword" 
+      style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"
+    ></i>
+  </span>
+
+</div>
 
     <label class="dob-label">Date de naissance</label>
     <div class="dob-container">
