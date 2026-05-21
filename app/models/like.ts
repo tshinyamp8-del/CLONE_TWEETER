@@ -11,7 +11,7 @@ export default class Like extends BaseModel {
   @column({ columnName: 'user_id' })
   declare userId: number
 
-  @column({ columnName: 'post_id' })
+  @column({ columnName: 'tweet_id' })
   declare tweetId: number
 
   @column.dateTime({ autoCreate: true })

@@ -5,7 +5,7 @@ import User from './user.js'
 import Like from '#models/like'
 
 export default class Tweet extends BaseModel {
-  public static table = 'posts'
+  public static table = 'tweets'
   
   @column({ isPrimary: true })
   declare id: number
@@ -13,8 +13,8 @@ export default class Tweet extends BaseModel {
   @column({ columnName: 'user_id' })
   declare userId: number
 
-  @column({ columnName: 'contenu' })
-  declare content: string | null
+  @column({ columnName: 'content' })
+  declare contenu: string | null
 
   @column({ columnName: 'media_url' })
   declare mediaUrl: string | null

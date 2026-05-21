@@ -33,6 +33,7 @@ export default class TweetsController {
         
         return {
           ...tweet.toJSON(),
+          contenu: tweet.contenu || tweet.$attributes.content,
           likesCount: tweet.$extras.likes_count,
           hasLiked: !!hasLiked
         }

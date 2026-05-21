@@ -1,5 +1,9 @@
 @component('layouts/main')
-    {{-- SECTION PARAMÈTRES (Reste masquée par défaut) --}}
+
+    <script>
+        window.currentUser = { id: {{ auth.user.id }} };
+    </script>
+
     <div id="settingsSection" class="section" style="display: none; padding: 20px; max-width: 600px; margin: 0 auto;">
         </div>
 

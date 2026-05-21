@@ -184,9 +184,31 @@ async function loadTweets() {
                     : `<div style="margin-top:10px; border-radius:15px; overflow:hidden;"><img src="${tweet.mediaUrl}" style="width:100%; max-height:500px; object-fit:cover; display:block;"></div>`;
             }
 
-            const deleteIcon = (currentUser && tweet.userId === currentUser.id) 
-                ? `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer; color:#71767b;"></i>` 
-                : '';
+            // 🌟 GESTION DYNAMIQUE DE LA CORBEILLE OU DU BOUTON FOLLOW
+let rightHeaderElement = "";
+
+// Sécurité pour récupérer l'ID de l'auteur du tweet (gère userId et user_id)
+const idAuteur = tweet.userId || tweet.user_id;
+
+if (window.currentUser && idAuteur === window.currentUser.id) {
+    // Si c'est mon tweet -> J'affiche la poubelle
+    rightHeaderElement = `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer; color:#71767b;"></i>`;
+} else if (idAuteur) {
+    // Si c'est le tweet de quelqu'un d'autre -> J'affiche le bouton Follow
+    rightHeaderElement = `
+        <button 
+            id="follow-btn-${idAuteur}"
+            onclick="toggleFollow(${idAuteur})"
+            data-following="${tweet.hasFollowed ? 'true' : 'false'}"
+            style="background-color: ${tweet.hasFollowed ? 'transparent' : '#fff'}; 
+                   color: ${tweet.hasFollowed ? '#fff' : '#0f1419'}; 
+                   border: ${tweet.hasFollowed ? '1px solid #536471' : 'none'}; 
+                   font-weight: bold; font-size: 13px; padding: 4px 12px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;"
+        >
+            ${tweet.hasFollowed ? 'Abonné' : 'Suivre'}
+        </button>
+    `;
+}
 
             const div = document.createElement('div');
             div.className = "tweet";
@@ -195,14 +217,16 @@ async function loadTweets() {
                 <div style="display:flex; gap:12px; padding:15px; font-family:sans-serif;">
                     <img src="${tweet.user?.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
                     <div style="flex:1">
-                        <div style="display:flex; justify-content:space-between;">
+                        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 2px;">
                             <div>
                                 <strong style="color:#fff;">${tweet.user?.username || 'Anonyme'}</strong>
                                 <span style="color:#71767b; margin-left:5px;">@${(tweet.user?.username || 'anonyme').toLowerCase().replace(/\s/g, '')}</span>
                             </div>
-                            ${deleteIcon}
+                            ${rightHeaderElement}
                         </div>
-                        <p style="color:#fff; margin: 5px 0; white-space: pre-wrap;">${tweet.content || ''}</p>
+                        <p style="color:#fff; margin: 4px 0 10px 0; text-align: left; white-space: pre-wrap; font-size: 15px;">
+                         ${tweet.content || tweet.contenu || ''}
+                        </p>
                         ${mediaHTML}
                         <div style="margin-top:10px;">
                             <button onclick="toggleLike(${tweet.id})" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}">
@@ -379,6 +403,62 @@ function togglePasswordVisibility(inputId, iconId) {
         eyeIcon.classList.add('fa-eye');
     }
 }
+
+async function toggleFollow(userId) {
+    const button = document.getElementById(`follow-btn-${userId}`)
+    const isFollowing = button.getAttribute('data-following') === 'true'
+  
+    try {
+      // Envoi de la requête au backend AdonisJS
+      const response = await fetch(`/users/${userId}/follow`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          // 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') // Décommente si Shield bloque
+        }
+      })
+  
+      if (!response.ok) throw new Error('Erreur réseau')
+      const data = await response.json()
+  
+      // 🔄 Mise à jour visuelle du bouton selon la réponse du serveur
+      if (data.following) {
+        button.setAttribute('data-following', 'true')
+        button.textContent = 'Abonné'
+        button.style.backgroundColor = 'transparent'
+        button.style.color = '#fff'
+        button.style.border = '1px solid #536471'
+      } else {
+        button.setAttribute('data-following', 'false')
+        button.textContent = 'Suivre'
+        button.style.backgroundColor = '#fff'
+        button.style.color = '#0f1419'
+        button.style.border = 'none'
+      }
+    } catch (error) {
+      console.error("Impossible de modifier le follow :", error)
+    }
+  }
+  
+  // 🎨 Effet X (Twitter) : Quand on passe la souris sur "Abonné", il affiche "Se désabonner" en rouge
+  function handleMouseOver(btn) {
+    if (btn.getAttribute('data-following') === 'true') {
+      btn.textContent = 'Se désabonner'
+      btn.style.color = '#f4212e'
+      btn.style.borderColor = '#f4212e'
+      btn.style.backgroundColor = 'rgba(244, 33, 46, 0.1)'
+    }
+  }
+  
+  function handleMouseOut(btn) {
+    if (btn.getAttribute('data-following') === 'true') {
+      btn.textContent = 'Abonné'
+      btn.style.color = '#fff'
+      btn.style.borderColor = '#536471'
+      btn.style.backgroundColor = 'transparent'
+    }
+  }
 
 // EXPOSITIONS GLOBAL AUX WINDOWS (Règle l'erreur "not defined" dans l'HTML)
 window.showSection = showSection;

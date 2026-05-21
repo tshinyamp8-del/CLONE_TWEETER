@@ -312,46 +312,70 @@ body {
     margin: 0 auto;
 }
 
-/* On ajoute une limite pour que le centre ne devienne pas TROP large sur écran géant */
+/* Lignes 316 à 326 */
 .main-content {
     border-right: 1px solid #333;
     border-left: 1px solid #333;
     width: 100%;
     max-width: 600px;
-    /* Force la largeur standard de X */
-    min-width: 600px;
-    /* Empêche le rétrécissement ou l'élargissement */
+    min-width: 0; 
     overflow-x: hidden;
-    /* Sécurité : coupe tout ce qui dépasse horizontalement */
 }
 
+
+/* Lignes 328 à 337 */
 @media (max-width: 1100px) {
     .app {
-        /* On garde le centre flexible même quand la barre de droite disparaît */
+        /* On passe à 2 colonnes : la sidebar réduite (80px) et le reste (1fr) */
         grid-template-columns: 80px 1fr;
+        justify-content: start; /* Aligne à gauche pour laisser de la place */
     }
 
     .right-sidebar {
-        display: none;
+        display: none; /* Cache les tendances sur tablette et mobile */
+    }
+
+    /* On réduit aussi la sidebar pour ne garder que les icônes */
+    .nav-item span, .post-btn-sidebar span {
+        display: none; 
+    }
+    
+    .sidebar {
+        align-items: center; /* Centre les icônes */
+        padding: 10px 0;
     }
 }
 
+
+/* Lignes 339 à 354 */
 @media (max-width: 700px) {
+    .app {
+        display: block; /* On enlève la grille pour empiler les éléments */
+    }
+
+    .sidebar {
+        display: none; /* On cache la barre latérale sur téléphone */
+    }
+
     .mobile-nav {
         display: flex;
-        /* On l'affiche seulement sur mobile */
         position: fixed;
         bottom: 0;
         width: 100%;
-        height: 50px;
-        background: white;
-        border-top: 1px solid #eff3f4;
+        height: 55px;
+        background: black; /* Changé en noir pour correspondre au thème */
+        border-top: 1px solid #333;
         justify-content: space-around;
         align-items: center;
-        font-size: 20px;
         z-index: 1000;
     }
+    
+    /* On ajoute un espace en bas du contenu pour ne pas que le dernier tweet soit caché par la barre */
+    .main-content {
+        padding-bottom: 60px;
+    }
 }
+
 
 /* --- Sidebar Gauche --- */
 .sidebar {
@@ -866,7 +890,7 @@ textarea#tweetInput::placeholder {
     }
 
     html body .big-x {
-        font-size: 60px !important;
+        font-size: 80px !important;
         /* Réduit enfin ce logo énorme */
     }
 

@@ -4,6 +4,7 @@ import router from '@adonisjs/core/services/router'
 const AuthController = () => import('#controllers/auth_controller')
 const TweetsController = () => import('#controllers/tweets_controller')
 const ProfileController = () => import('#controllers/profile_controller')
+const FollowsController = () => import('#controllers/follows_controller')
 
 // 1. PAGE DE GARDE (WELCOME)
 router.get('/', [AuthController, 'index']).as('home')
@@ -24,6 +25,10 @@ router.group(() => {
 router.group(() => {
   router.get('home', [AuthController, 'appHome']).as('app.home')
   router.post('logout', [AuthController, 'destroySession']).as('logout')
+  
+  // 🌟 NOUVELLE ROUTE : Gérer les abonnements / désabonnements
+  router.post('users/:id/follow', [FollowsController, 'toggle']).as('users.follow')
+  
 }).use(middleware.auth())
 
 router.group(() => {

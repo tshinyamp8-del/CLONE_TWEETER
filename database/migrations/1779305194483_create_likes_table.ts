@@ -1,12 +1,13 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'tweets'
+  protected tableName = 'likes'
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
-      
+
+      // L'utilisateur qui a liké
       table
         .integer('user_id')
         .unsigned()
@@ -14,10 +15,17 @@ export default class extends BaseSchema {
         .inTable('users')
         .onDelete('CASCADE')
 
-      table.text('content', 'long').nullable()
-      table.string('media_url', 255).nullable()
-      table.string('media_type', 50).nullable() // 'image' ou 'video'
-      
+      // Le tweet qui est liké
+      table
+        .integer('tweet_id')
+        .unsigned()
+        .references('id')
+        .inTable('tweets')
+        .onDelete('CASCADE')
+
+      // Sécurité : Un utilisateur ne peut liker un tweet qu'une seule fois
+      table.unique(['user_id', 'tweet_id'])
+
       table.timestamp('created_at')
       table.timestamp('updated_at')
     })

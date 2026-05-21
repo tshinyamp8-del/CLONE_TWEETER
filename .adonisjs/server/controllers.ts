@@ -5,6 +5,7 @@
 
 export const controllers = {
   Auth: () => import('#controllers/auth_controller'),
+  Follows: () => import('#controllers/follows_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Profile: () => import('#controllers/profile_controller'),
   Session: () => import('#controllers/session_controller'),
