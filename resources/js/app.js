@@ -98,65 +98,105 @@ function clearMedia() {
 function postTweet() {
     const input = document.getElementById('tweetInput');
     const content = input ? input.value.trim() : "";
-    
-    const button = document.querySelector('.btn-post-main') || 
-                   document.querySelector("button[onclick='postTweet()']") || 
-                   document.querySelector("button[onclick='window.postTweet()']");
+    const button = document.querySelector("button[onclick='postTweet()']");
 
     if (!content && !selectedMediaFile) return;
 
     const formData = new FormData();
     formData.append('content', content);
-    if (selectedMediaFile) {
-        formData.append('media', selectedMediaFile); // Correspond à request.file('media')
-    }
+    if (selectedMediaFile) formData.append('media', selectedMediaFile);
 
     if (button) {
         button.disabled = true;
-        button.innerText = "Envoi... 0%";
+        button.innerText = "Envoi...";
     }
 
     const xhr = new XMLHttpRequest();
-    // 🌟 SYNCHRONISATION : Redirection vers l'URL exacte gérée par ton contrôleur
     xhr.open("POST", "/api/tweets");
-
-    // Gestion du token CSRF d'AdonisJS Shield si présent
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (csrfToken) {
-        xhr.setRequestHeader('x-csrf-token', csrfToken);
-    }
-
-    xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable && button) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            button.innerText = `Envoi... ${percent}%`;
-        }
-    });
+    if (csrfToken) xhr.setRequestHeader('x-csrf-token', csrfToken);
 
     xhr.onload = async () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-            if (input) input.value = "";
-            clearMedia();
-            await loadTweets(); // Recharge le fil d'actu avec le nouveau média inclus
+            try {
+                const newTweet = JSON.parse(xhr.responseText);
+                if (input) input.value = "";
+                clearMedia();
+                addSingleTweetToTop(newTweet);
+            } catch (e) {
+                // Si le JSON est invalide, on retombe sur l'ancienne méthode
+                console.warn("Réponse serveur non-JSON, recharge complète...");
+                if (input) input.value = "";
+                clearMedia();
+                await loadTweets();
+            }
         } else {
-            alert("Erreur lors de l'envoi du post. Vérifie tes logs serveurs.");
+            alert("Erreur lors de l'envoi.");
         }
         if (button) {
             button.disabled = false;
             button.innerText = "Poster";
         }
     };
-
-    xhr.onerror = () => {
-        alert("Erreur réseau lors du téléversement.");
-        if (button) {
-            button.disabled = false;
-            button.innerText = "Poster";
-        }
-    };
-
     xhr.send(formData);
 }
+
+function addSingleTweetToTop(tweet) {
+    const container = document.getElementById('tweetsContainer');
+    if (!container) return;
+
+    // 1. On récupère le texte (gère 'content' ou 'contenu')
+    const texteAafficher = tweet.content || tweet.contenu || "";
+    
+    // 2. On récupère les infos de l'utilisateur (soit du tweet, soit de votre session)
+    const username = tweet.user?.username || (window.currentUser ? window.currentUser.username : "Moi");
+    const avatar = tweet.user?.avatarUrl || (window.currentUser ? window.currentUser.avatarUrl : 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png' );
+
+    let mediaHTML = "";
+    if (tweet.mediaUrl) {
+        mediaHTML = (tweet.mediaType === 'video')
+            ? `<div style="margin-top:10px; background:#000; border-radius:15px; overflow:hidden;"><video controls style="width:100%; max-height:400px; display:block;"><source src="${tweet.mediaUrl}"></video></div>`
+            : `<div style="margin-top:10px; border-radius:15px; overflow:hidden;"><img src="${tweet.mediaUrl}" style="width:100%; max-height:500px; object-fit:cover; display:block;"></div>`;
+    }
+
+    const div = document.createElement('div');
+    div.className = "tweet";
+    div.style.borderBottom = "1px solid #2f3336";
+    div.style.textAlign = "left";
+    div.style.display = "block"; 
+
+    div.innerHTML = `
+        <div style="display:flex !important; gap:12px; padding:15px; font-family:sans-serif; justify-content: flex-start !important; align-items: flex-start !important; text-align: left !important;">
+            <img src="${avatar}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink: 0;">
+            <div style="flex:1; display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; min-width: 0;">
+                <div style="display:flex !important; justify-content:space-between !important; align-items: center !important; width: 100%;">
+                    <div style="text-align: left !important;">
+                        <strong style="color:#fff;">${username}</strong>
+                        <span style="color:#71767b; margin-left:5px;">@${username.toLowerCase().replace(/\s/g, '')}</span>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id}, event)" style="cursor:pointer; color:#71767b;"></i>
+                    </div>
+                </div>
+                <p style="color:#fff; margin: 4px 0 10px 0 !important; text-align: left !important; white-space: pre-wrap; font-size: 15px; width: 100% !important;">
+                    ${texteAafficher}
+                </p>
+                <div style="width: 100% !important; text-align: left !important;">
+                    ${mediaHTML}
+                </div>
+                <div style="margin-top:10px; width: 100% !important;">
+                    <button onclick="toggleLike(${tweet.id}, event)" style="border:none; background:none; cursor:pointer; color:#71767b; padding: 0;">
+                        🤍 0
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.prepend(div);
+}
+
+
 
 async function loadTweets() {
     const container = document.getElementById('tweetsContainer');
@@ -177,59 +217,73 @@ async function loadTweets() {
         tweets.forEach(tweet => {
             let mediaHTML = "";
             
-            // 🌟 Utilisation dynamique des nouvelles propriétés du modèle mis à jour
             if (tweet.mediaUrl) {
                 mediaHTML = (tweet.mediaType === 'video')
                     ? `<div style="margin-top:10px; background:#000; border-radius:15px; overflow:hidden;"><video controls style="width:100%; max-height:400px; display:block;"><source src="${tweet.mediaUrl}"></video></div>`
                     : `<div style="margin-top:10px; border-radius:15px; overflow:hidden;"><img src="${tweet.mediaUrl}" style="width:100%; max-height:500px; object-fit:cover; display:block;"></div>`;
             }
 
-            // 🌟 GESTION DYNAMIQUE DE LA CORBEILLE OU DU BOUTON FOLLOW
-let rightHeaderElement = "";
+            // 🌟 Sécurisation de l'ID Auteur (gère camelCase et snake_case)
+            const idAuteur = tweet.userId || tweet.user_id;
+            let rightHeaderElement = "";
+            
+            // On vérifie si window.currentUser existe pour éviter le plantage
+            const monId = (window.currentUser && window.currentUser.id) ? window.currentUser.id : null;
 
-// Sécurité pour récupérer l'ID de l'auteur du tweet (gère userId et user_id)
-const idAuteur = tweet.userId || tweet.user_id;
-
-if (window.currentUser && idAuteur === window.currentUser.id) {
-    // Si c'est mon tweet -> J'affiche la poubelle
-    rightHeaderElement = `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer; color:#71767b;"></i>`;
-} else if (idAuteur) {
-    // Si c'est le tweet de quelqu'un d'autre -> J'affiche le bouton Follow
-    rightHeaderElement = `
-        <button 
-            id="follow-btn-${idAuteur}"
-            onclick="toggleFollow(${idAuteur})"
-            data-following="${tweet.hasFollowed ? 'true' : 'false'}"
-            style="background-color: ${tweet.hasFollowed ? 'transparent' : '#fff'}; 
-                   color: ${tweet.hasFollowed ? '#fff' : '#0f1419'}; 
-                   border: ${tweet.hasFollowed ? '1px solid #536471' : 'none'}; 
-                   font-weight: bold; font-size: 13px; padding: 4px 12px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;"
-        >
-            ${tweet.hasFollowed ? 'Abonné' : 'Suivre'}
-        </button>
-    `;
-}
+            if (monId && idAuteur === monId) {
+                // Mon tweet -> Poubelle
+                rightHeaderElement = `<i class="fa-solid fa-trash-can" onclick="deleteTweet(${tweet.id})" style="cursor:pointer; color:#71767b;"></i>`;
+            } else if (idAuteur) {
+                // Autre utilisateur -> Bouton Follow
+                rightHeaderElement = `
+                    <button 
+                        id="follow-btn-${idAuteur}"
+                        onclick="toggleFollow(${idAuteur})"
+                        data-following="${tweet.hasFollowed ? 'true' : 'false'}"
+                        style="background-color: ${tweet.hasFollowed ? 'transparent' : '#fff'}; 
+                               color: ${tweet.hasFollowed ? '#fff' : '#0f1419'}; 
+                               border: ${tweet.hasFollowed ? '1px solid #536471' : 'none'}; 
+                               font-weight: bold; font-size: 13px; padding: 4px 12px; border-radius: 9999px; cursor: pointer; font-family: sans-serif;"
+                    >
+                        ${tweet.hasFollowed ? 'Abonné' : 'Suivre'}
+                    </button>
+                `;
+            }
 
             const div = document.createElement('div');
             div.className = "tweet";
+            
+            // 🌟 FORCE LE BLOC DE BASE À S'ALIGNER À GAUCHE (Écrase le CSS global)
             div.style.borderBottom = "1px solid #2f3336";
+            div.style.textAlign = "left";
+            div.style.display = "block"; 
+
             div.innerHTML = `
-                <div style="display:flex; gap:12px; padding:15px; font-family:sans-serif;">
-                    <img src="${tweet.user?.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-                    <div style="flex:1">
-                        <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 2px;">
-                            <div>
+                <div style="display:flex !important; gap:12px; padding:15px; font-family:sans-serif; justify-content: flex-start !important; align-items: flex-start !important; text-align: left !important;">
+                    <img src="${tweet.user?.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink: 0;">
+                    
+                    <div style="flex:1; display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; min-width: 0;">
+                        
+                        <div style="display:flex !important; justify-content:space-between !important; align-items: center !important; width: 100%;">
+                            <div style="text-align: left !important;">
                                 <strong style="color:#fff;">${tweet.user?.username || 'Anonyme'}</strong>
                                 <span style="color:#71767b; margin-left:5px;">@${(tweet.user?.username || 'anonyme').toLowerCase().replace(/\s/g, '')}</span>
                             </div>
-                            ${rightHeaderElement}
+                            <div>
+                                ${rightHeaderElement}
+                            </div>
                         </div>
-                        <p style="color:#fff; margin: 4px 0 10px 0; text-align: left; white-space: pre-wrap; font-size: 15px;">
+                        
+                        <p style="color:#fff; margin: 4px 0 10px 0 !important; text-align: left !important; white-space: pre-wrap; font-size: 15px; width: 100% !important; align-self: flex-start !important;">
                          ${tweet.content || tweet.contenu || ''}
                         </p>
-                        ${mediaHTML}
-                        <div style="margin-top:10px;">
-                            <button onclick="toggleLike(${tweet.id}, event)" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}">
+                        
+                        <div style="width: 100% !important; text-align: left !important;">
+                            ${mediaHTML}
+                        </div>
+                        
+                        <div style="margin-top:10px; width: 100% !important; text-align: left !important;">
+                            <button onclick="toggleLike(${tweet.id}, event)" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}; padding: 0;">
                                 ${tweet.hasLiked ? "❤️" : "🤍"} ${tweet.likesCount || 0}
                             </button>
                         </div>
@@ -243,49 +297,89 @@ if (window.currentUser && idAuteur === window.currentUser.id) {
     }
 }
 
-async function toggleLike(id) {
-    // 1. On trouve le bouton spécifique du tweet grâce au 'onclick' ou en lui ajoutant un ID
-    // Pour faire simple, on récupère le bouton qui a été cliqué via l'événement actuel
-    const button = event.currentTarget;
-    if (!button) return;
+async function toggleLike(tweetId, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    // 1. On récupère le bouton
+    const btn = event.currentTarget || event.target;
+    
+    // 2. On extrait le nombre actuel depuis le texte du bouton
+    // (On enlève l'émoji et on garde le chiffre)
+    let currentText = btn.innerText.trim();
+    let currentCount = parseInt(currentText.replace(/[❤️🤍]/g, '')) || 0;
+    
+    // 3. On détermine le nouvel état localement
+    const isCurrentlyLiked = btn.innerText.includes("❤️");
+    const newIsLiked = !isCurrentlyLiked;
+    const newCount = newIsLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+
+    // 4. MISE À JOUR IMMÉDIATE DE L'INTERFACE (C'est instantané !)
+    btn.style.color = newIsLiked ? '#f91880' : '#71767b';
+    btn.innerHTML = `${newIsLiked ? "❤️" : "🤍"} ${newCount}`;
 
     try {
-        // Envoi de la requête en arrière-plan
-        const response = await fetch(`/api/tweets/${id}/like`, { method: 'POST' });
-        
-        if (response.ok) {
-            const data = await response.json(); // Ton contrôleur renvoie { liked: true } ou { liked: false }
-            
-            // 2. On récupère le nombre actuel de likes affiché
-            // On extrait le nombre du texte actuel (ex: "🤍 3" ou "❤️ 0")
-            let currentText = button.innerText;
-            let count = parseInt(currentText.replace(/[^0-9]/g, '')) || 0;
-
-            // 3. On met à jour uniquement ce bouton sans toucher au reste de la page
-            if (data.liked) {
-                count++;
-                button.innerText = `❤️ ${count}`;
-                button.style.color = '#f91880';
-            } else {
-                count--;
-                button.innerText = `🤍 ${count}`;
-                button.style.color = '#71767b';
+        // 5. On envoie la requête au serveur en arrière-plan
+        const response = await fetch(`/api/tweets/${tweetId}/like`, {
+            method: 'POST',
+            headers: {
+                'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             }
+        });
+
+        if (!response.ok) {
+            throw new Error("Erreur serveur");
         }
+        
+        // Optionnel : si le serveur renvoie le vrai compte, on synchronise
+        const data = await response.json();
+        if (data && typeof data.likesCount !== 'undefined') {
+            btn.innerHTML = `${newIsLiked ? "❤️" : "🤍"} ${data.likesCount}`;
+        }
+
     } catch (e) {
-        console.error("Erreur lors du toggle like :", e);
+        console.error("Erreur lors du like", e);
+        // En cas d'erreur, on remet l'ancien état pour ne pas mentir à l'utilisateur
+        btn.style.color = isCurrentlyLiked ? '#f91880' : '#71767b';
+        btn.innerHTML = `${isCurrentlyLiked ? "❤️" : "🤍"} ${currentCount}`;
+        alert("Impossible de liker ce tweet. Vérifiez votre connexion.");
     }
 }
 
-async function deleteTweet(tweetId) {
-    if (confirm("Supprimer ce post définitivement ?")) {
-        try {
-            // 🌟 SYNCHRONISATION : Route mappée sur la méthode destroy
-            const response = await fetch(`/api/tweets/${tweetId}`, { method: 'DELETE' });
-            if (response.ok) await loadTweets();
-        } catch (e) {
-            console.error(e);
+async function deleteTweet(tweetId, event) {
+    // 1. On demande confirmation
+    if (!confirm("Supprimer ce post définitivement ?")) return;
+
+    try {
+        // 2. On envoie la demande de suppression au serveur
+        const response = await fetch(`/api/tweets/${tweetId}`, { 
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        if (response.ok) {
+            // 3. MISE À JOUR CHIRURGICALE
+            // On trouve le bloc ".tweet" le plus proche de l'icône cliquée
+            if (event) {
+                const tweetElement = event.target.closest('.tweet');
+                if (tweetElement) {
+                    // On le retire de l'écran avec une petite animation si on veut, 
+                    // ou simplement comme ça :
+                    tweetElement.remove();
+                }
+            } else {
+                // Au cas où l'event ne passerait pas, on recharge tout (roue de secours)
+                await loadTweets();
+            }
+        } else {
+            alert("Erreur lors de la suppression sur le serveur.");
         }
+    } catch (e) {
+        console.error("Erreur suppression:", e);
     }
 }
 
@@ -484,7 +578,19 @@ async function toggleFollow(userId) {
     }
   }
 
-// EXPOSITIONS GLOBAL AUX WINDOWS (Règle l'erreur "not defined" dans l'HTML)
+// ... toutes tes autres fonctions ...
+
+async function loadUsers() {
+    // Ton code existant...
+}
+
+function updateFollowStats() {
+    // Ton code existant...
+}
+
+/************************************************
+ * 🌟 LE BLOC WINDOW TOUT EN BAS DE TOUT LE FICHIER
+ ************************************************/
 window.showSection = showSection;
 window.showPage = showPage;
 window.handleMediaSelect = handleMediaSelect;
@@ -499,6 +605,5 @@ window.setTheme = setTheme;
 window.setAccent = setAccent;
 window.logout = logout;
 window.togglePassword = togglePassword;
-
-async function loadUsers() {}
-function updateFollowStats() {}
+window.toggleFollow = toggleFollow;
+window.loadTweets = loadTweets; 

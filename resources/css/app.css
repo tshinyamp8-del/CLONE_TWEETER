@@ -466,9 +466,17 @@ body {
     border-bottom: 1px solid #333;
     transition: 0.2s;
 }
-
+    
 .tweet:hover {
     background: #080808;
+}
+    
+      
+.tweet p {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 /* ===================================================
