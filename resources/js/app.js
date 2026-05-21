@@ -229,7 +229,7 @@ if (window.currentUser && idAuteur === window.currentUser.id) {
                         </p>
                         ${mediaHTML}
                         <div style="margin-top:10px;">
-                            <button onclick="toggleLike(${tweet.id})" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}">
+                            <button onclick="toggleLike(${tweet.id}, event)" style="border:none; background:none; cursor:pointer; color:${tweet.hasLiked ? '#f91880' : '#71767b'}">
                                 ${tweet.hasLiked ? "❤️" : "🤍"} ${tweet.likesCount || 0}
                             </button>
                         </div>
@@ -244,12 +244,36 @@ if (window.currentUser && idAuteur === window.currentUser.id) {
 }
 
 async function toggleLike(id) {
+    // 1. On trouve le bouton spécifique du tweet grâce au 'onclick' ou en lui ajoutant un ID
+    // Pour faire simple, on récupère le bouton qui a été cliqué via l'événement actuel
+    const button = event.currentTarget;
+    if (!button) return;
+
     try {
-        // 🌟 SYNCHRONISATION : Route mappée sur la méthode toggleLike
+        // Envoi de la requête en arrière-plan
         const response = await fetch(`/api/tweets/${id}/like`, { method: 'POST' });
-        if (response.ok) await loadTweets();
+        
+        if (response.ok) {
+            const data = await response.json(); // Ton contrôleur renvoie { liked: true } ou { liked: false }
+            
+            // 2. On récupère le nombre actuel de likes affiché
+            // On extrait le nombre du texte actuel (ex: "🤍 3" ou "❤️ 0")
+            let currentText = button.innerText;
+            let count = parseInt(currentText.replace(/[^0-9]/g, '')) || 0;
+
+            // 3. On met à jour uniquement ce bouton sans toucher au reste de la page
+            if (data.liked) {
+                count++;
+                button.innerText = `❤️ ${count}`;
+                button.style.color = '#f91880';
+            } else {
+                count--;
+                button.innerText = `🤍 ${count}`;
+                button.style.color = '#71767b';
+            }
+        }
     } catch (e) {
-        console.error(e);
+        console.error("Erreur lors du toggle like :", e);
     }
 }
 
