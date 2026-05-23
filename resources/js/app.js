@@ -19,22 +19,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Dans ton resources/js/app.js
 async function fetchCurrentUser() {
     try {
-        // 💡 Assure-toi que cette route existe dans ton start/routes.ts (ex: /me ou /api/me)
         const response = await fetch('/api/me');
         if (response.ok) {
-            currentUser = await response.json();
+            // 🌟 On stocke le résultat dans l'objet global window
+            window.currentUser = await response.json();
+            console.log("👤 Utilisateur connecté détecté :", window.currentUser.username);
+            
+            // Tout s'exécute parfaitement à la suite !
             updateProfileUI();
             updateSidebarProfile();
-            updateFollowStats();
+            if (typeof updateFollowStats === 'function') {
+                updateFollowStats();
+            }
+            
+            // 🌟 Force la synchronisation du flux dès que l'identité est confirmée
+            if (typeof loadTweets === 'function') {
+                loadTweets();
+            }
         } else {
             console.log("L'utilisateur n'est pas connecté au backend.");
+            window.currentUser = null;
         }
     } catch (e) {
         console.error("Impossible de récupérer l'utilisateur connecté", e);
+        window.currentUser = null;
     }
 }
+// 🌟 LE DÉCLENCHEUR INITIAL
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("🚀 Application chargée, récupération du profil...");
+    
+    await fetchCurrentUser(); 
+});
 
 /************************************************
  * NAVIGATION PRINCIPALE ET INTERNE
@@ -54,14 +73,36 @@ function showSection(sectionId) {
 }
 
 function showPage(pageName) {
+    // 1. Masquage automatique de toutes les sections
     const pages = ['page-home', 'page-profile', 'page-explorer', 'page-notifications', 'page-messages', 'page-bookmarks'];
-    pages.forEach(p => { const el = document.getElementById(p); if (el) el.classList.add('hidden'); });
+    pages.forEach(p => { 
+        const el = document.getElementById(p); 
+        if (el) el.classList.add('hidden'); 
+    });
 
+    // 2. Affichage de la page ciblée
     const target = document.getElementById('page-' + pageName);
-    if (target) target.classList.remove('hidden');
+    if (target) {
+        target.classList.remove('hidden');
+    } else {
+        console.warn(`⚠️ Attention : L'élément HTML avec l'ID "page-${pageName}" est introuvable.`);
+    }
 
-    if (pageName === 'profile') updateProfileUI();
+    // 3. Si c'est le profil, on rafraîchit l'affichage
+    if (pageName === 'profile') {
+        // Sécurité : si window.currentUser n'est pas encore initialisé, on évite le crash
+        if (!window.currentUser && window.auth?.user) {
+            window.currentUser = window.auth.user;
+        }
+        
+        if (typeof updateProfileUI === 'function') {
+            updateProfileUI();
+        }
+    }
 }
+
+// 🌟 CRUCIAL POUR VITE : On attache la fonction à l'objet global window
+window.showPage = showPage;
 
 /************************************************
  * TWEETS & ULTRA-LARGE MÉDIAS (JUSQU'À 5 GO)
@@ -348,35 +389,39 @@ async function toggleLike(tweetId, event) {
     }
 }
 
+// Dans ton resources/js/app.js
 async function deleteTweet(tweetId, event) {
-    // 1. On demande confirmation
     if (!confirm("Supprimer ce post définitivement ?")) return;
 
+    // Extraction dynamique du jeton CSRF rafraîchi avant l'appel
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     try {
-        // 2. On envoie la demande de suppression au serveur
         const response = await fetch(`/api/tweets/${tweetId}`, { 
             method: 'DELETE',
             headers: {
-                'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                'x-csrf-token': csrfToken,
+                'Content-Type': 'application/json'
             }
         });
 
         if (response.ok) {
-            // 3. MISE À JOUR CHIRURGICALE
-            // On trouve le bloc ".tweet" le plus proche de l'icône cliquée
-            if (event) {
+            console.log(`✅ Tweet ${tweetId} supprimé sur le serveur.`);
+            
+            // Retrait visuel instantané du DOM
+            if (event && event.target) {
                 const tweetElement = event.target.closest('.tweet');
                 if (tweetElement) {
-                    // On le retire de l'écran avec une petite animation si on veut, 
-                    // ou simplement comme ça :
-                    tweetElement.remove();
+                    tweetElement.remove(); 
+                } else {
+                    if (typeof loadTweets === 'function') await loadTweets();
                 }
             } else {
-                // Au cas où l'event ne passerait pas, on recharge tout (roue de secours)
-                await loadTweets();
+                if (typeof loadTweets === 'function') await loadTweets();
             }
         } else {
-            alert("Erreur lors de la suppression sur le serveur.");
+            const errorData = await response.json().catch(() => ({}));
+            alert(errorData.error || "Erreur lors de la suppression sur le serveur.");
         }
     } catch (e) {
         console.error("Erreur suppression:", e);
@@ -386,13 +431,19 @@ async function deleteTweet(tweetId, event) {
 /************************************************
  * GESTION DU PROFIL (RÉEL)
  ************************************************/
+// Dans ton resources/js/app.js
 async function saveProfile() {
+    console.log("🚀 Clic détecté sur le bouton Enregistrer");
+
     const nameInput = document.getElementById('editName');
     const bioInput = document.getElementById('editBio');
     const bannerInput = document.getElementById('editBannerFile');
     const photoInput = document.getElementById('editPhotoFile');
 
-    if (!nameInput) return;
+    if (!nameInput) {
+        console.error("❌ Erreur critique : L'élément avec l'ID 'editName' n'existe pas dans le HTML.");
+        return;
+    }
 
     const formData = new FormData();
     formData.append('username', nameInput.value);
@@ -401,51 +452,95 @@ async function saveProfile() {
     if (photoInput && photoInput.files[0]) formData.append('avatar', photoInput.files[0]);
     if (bannerInput && bannerInput.files[0]) formData.append('banner', bannerInput.files[0]);
 
+    // Extraction dynamique du jeton CSRF rafraîchi
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     try {
         const response = await fetch('/api/profile', { 
             method: 'PUT', 
             body: formData,
             headers: {
-                'x-csrf-token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                'x-csrf-token': csrfToken
             }
         });
+        
+        console.log("📡 Statut de la réponse serveur :", response.status);
+
         if (response.ok) {
-            currentUser = await response.json();
+            window.currentUser = await response.json();
+            console.log("✅ Profil mis à jour avec succès :", window.currentUser);
+            
             updateProfileUI();
             updateSidebarProfile();
             closeEditModal();
+            
+            if (typeof loadTweets === 'function') loadTweets();
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("❌ Le serveur a renvoyé une erreur :", errorData);
+            alert(`Erreur serveur : ${errorData.error || 'Impossible de sauvegarder le profil.'}`);
         }
     } catch (e) {
-        console.error("Erreur lors de la sauvegarde du profil", e);
+        console.error("💥 Échec total de la requête fetch :", e);
     }
 }
 
 function updateProfileUI() {
-    if (!currentUser) return;
+    // Sécurité : si l'utilisateur n'est pas chargé, on ne fait rien
+    if (!window.currentUser || !window.currentUser.username) return;
+
     const nameDisplay = document.getElementById('profNameDisplay');
     const nameTitle = document.getElementById('profNameTitle');
     const handleDisplay = document.getElementById('profHandleDisplay');
-    const bioDisplay = document.querySelector('.profile-info .bio');
+    const bioDisplay = document.getElementById('profBioDisplay');
     const bannerImg = document.getElementById('userBanner');
     const profileImg = document.getElementById('userProfilePic');
 
-    if (nameDisplay) nameDisplay.innerText = currentUser.username;
-    if (nameTitle) nameTitle.innerText = currentUser.username;
-    if (handleDisplay) handleDisplay.innerText = "@" + currentUser.username.toLowerCase().replace(/\s/g, '');
-    if (bioDisplay) bioDisplay.innerText = currentUser.bio || "Pas encore de biographie.";
-    if (bannerImg && currentUser.bannerUrl) bannerImg.src = currentUser.bannerUrl;
-    if (profileImg && currentUser.avatarUrl) profileImg.src = currentUser.avatarUrl;
+    // Récupération des données du backend
+    const username = window.currentUser.username;
+    const avatar = window.currentUser.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
+    const banner = window.currentUser.bannerUrl || 'https://images.unsplash.com/photo-1557683316-973673baf926';
+    const bio = window.currentUser.bio || "Pas encore de biographie.";
+
+    // Injection propre des textes (uniquement dans les spans dédiés)
+    if (nameDisplay) nameDisplay.innerText = username;
+    if (nameTitle) nameTitle.innerText = username;
+    
+    if (handleDisplay) {
+        handleDisplay.innerText = username.toLowerCase().replace(/\s/g, '');
+    }
+    if (bioDisplay) bioDisplay.innerText = bio;
+
+    // Mise à jour des images
+    if (bannerImg) bannerImg.src = banner;
+    if (profileImg) profileImg.src = avatar;
+
+    // Synchronisation des petits avatars partout sur l'application
+    document.querySelectorAll('.avatar-small').forEach(img => {
+        img.src = avatar;
+    });
 }
 
 function updateSidebarProfile() {
     const container = document.getElementById('userProfileSide');
-    if (!container || !currentUser) return;
+    // 🌟 Sécurité renforcée : on vérifie que currentUser ET son username existent
+    if (!container || !window.currentUser || !window.currentUser.username) return;
+
+    // On force le conteneur à aligner son contenu à gauche pour éviter tout centrage hérité
+    container.style.textAlign = "left";
+    container.style.display = "flex";
+    container.style.alignItems = "center";
+    container.style.justifyContent = "flex-start";
+
+    const username = window.currentUser.username;
+    const avatar = window.currentUser.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png';
+    const handle = username.toLowerCase().replace(/\s/g, '');
 
     container.innerHTML = `
-        <img src="${currentUser.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-        <div style="margin-left:10px">
-            <strong style="display:block; color:#fff;">${currentUser.username}</strong>
-            <span style="color:#71767b">@${currentUser.username.toLowerCase().replace(/\s/g, '')}</span>
+        <img src="${avatar}" class="avatar-small" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink: 0;">
+        <div style="margin-left:10px; text-align: left;">
+            <strong style="display:block; color:#fff; text-align: left;">${username}</strong>
+            <span style="color:#71767b; display:block; text-align: left;">@${handle}</span>
         </div>
     `;
 }
@@ -466,12 +561,18 @@ async function logout() {
 
 function openEditModal() {
     const modal = document.getElementById('editProfileModal');
-    if (modal && currentUser) {
+    // On utilise window.currentUser pour être raccord avec le reste du script connecté au backend
+    if (modal && window.currentUser) {
         modal.classList.remove('hidden');
-        if (document.getElementById('editName')) document.getElementById('editName').value = currentUser.username;
-        if (document.getElementById('editBio')) document.getElementById('editBio').value = currentUser.bio || '';
+        if (document.getElementById('editName')) {
+            document.getElementById('editName').value = window.currentUser.username || '';
+        }
+        if (document.getElementById('editBio')) {
+            document.getElementById('editBio').value = window.currentUser.bio || '';
+        }
     }
 }
+
 function closeEditModal() { 
     const modal = document.getElementById('editProfileModal');
     if (modal) modal.classList.add('hidden'); 

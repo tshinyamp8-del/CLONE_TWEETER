@@ -112,6 +112,43 @@
             </div>
 
             {{-- Écris tes autres sous-pages cachées ici (profile, explorer, etc.) en gardant leur style="display: none;" au départ --}}
+
+            <div id="page-profile" class="page-content hidden">
+    <div class="top-nav" style="display: flex; align-items: center; gap: 20px; padding: 10px 15px;">
+        <i class="fa-solid fa-arrow-left" onclick="window.showPage('home')" style="cursor: pointer;"></i>
+        <div>
+            <h3 style="margin: 0; font-size: 18px; color: #fff;"><span id="profNameTitle">{{ auth.user.username }}</span></h3>
+        </div>
+    </div>
+
+    <div class="profile-header" style="position: relative;">
+        <div class="profile-banner" style="width: 100%; height: 200px; overflow: hidden; background: #333;">
+            <img id="userBanner" src="{{ auth.user.bannerUrl || 'https://images.unsplash.com/photo-1557683316-973673baf926' }}" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 15px; margin-top: -65px; position: relative; z-index: 2;">
+            <img id="userProfilePic" src="{{ auth.user.avatarUrl || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png' }}" 
+                 style="width: 130px; height: 130px; border-radius: 50%; border: 4px solid #000; background-color: #15181c; object-fit: cover; display: block; flex-shrink: 0;">
+            
+            <div style="margin-bottom: 12px;">
+                <button class="edit-profile-btn-outline" onclick="window.openEditModal()">Éditer le profil</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-info" style="padding: 15px; margin-top: 10px;">
+        <h2 style="color: #fff; margin: 0; font-size: 22px; font-weight: bold;"><span id="profNameDisplay">{{ auth.user.username }}</span></h2>
+        
+        <p class="handle" style="color: #71767b; margin: 2px 0 12px 0;">@<span id="profHandleDisplay">{{ auth.user.username.toLowerCase().replace(/\s/g, '') }}</span></p>
+        
+        <p class="bio" style="color: #fff; margin: 12px 0; font-size: 15px;"><span id="profBioDisplay">{{ auth.user.bio || 'Pas encore de biographie.' }}</span></p>
+
+        <p style="color: #71767b; font-size: 14px;">
+            <span id="followersCount" style="color: #fff; font-weight: bold;">0</span> abonnés •
+            <span id="followingCount" style="color: #fff; font-weight: bold;">0</span> abonnements
+        </p>
+    </div>
+</div>
         </main>
 
         {{-- 3. COLONNE DROITE : TENDANCES / WHATS HAPPENING --}}
@@ -132,4 +169,59 @@
     </div>
 
     @include('components/edit_profile_modal')
+
+    {{-- MODAL D'ÉDITION DE PROFIL --}}
+<div id="editProfileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(91, 112, 131, 0.4); z-index: 9999; justify-content: center; align-items: center; font-family: sans-serif;">
+    <div style="background-color: #000; width: 100%; max-width: 600px; border-radius: 16px; border: 1px solid #2f3336; color: #fff; overflow: hidden; position: relative;">
+        
+        {{-- En-tête de la Modal --}}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2f3336;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <i class="fa-solid fa-xmark" onclick="window.closeEditModal()" style="cursor: pointer; font-size: 20px; color: #fff;"></i>
+                <h3 style="margin: 0; font-size: 20px; font-weight: bold;">Éditer le profil</h3>
+            </div>
+            <button onclick="window.saveProfile()" style="background-color: #fff; color: #000; border: none; padding: 6px 16px; border-radius: 9999px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                Enregistrer
+            </button>
+        </div>
+
+        {{-- Formulaire de modification --}}
+        <div style="padding: 16px; max-height: 80vh; overflow-y: auto;">
+            
+            {{-- Champ : Nom / Pseudo --}}
+            <div style="border: 1px solid #2f3336; border-radius: 4px; padding: 8px; margin-bottom: 25px; position: relative;">
+                <label style="color: #71767b; font-size: 13px; display: block;">Nom</label>
+                <input type="text" id="editUsernameInput" value="{{ auth.user.username }}" style="background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; margin-top: 4px;">
+            </div>
+
+            {{-- Champ : Biographie --}}
+            <div style="padding: 16px; max-height: 80vh; overflow-y: auto;">
+                
+                {{-- Champ : Nom / Pseudo (Correction ID) --}}
+                <div style="border: 1px solid #2f3336; border-radius: 4px; padding: 8px; margin-bottom: 25px;">
+                    <label style="color: #71767b; font-size: 13px; display: block;">Nom</label>
+                    <input type="text" id="editName" value="{{ auth.user.username }}" style="background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; margin-top: 4px;">
+                </div>
+
+                {{-- Champ : Biographie (Correction ID) --}}
+                <div style="border: 1px solid #2f3336; border-radius: 4px; padding: 8px; margin-bottom: 20px;">
+                    <label style="color: #71767b; font-size: 13px; display: block;">Biographie</label>
+                    <textarea id="editBio" rows="3" style="background: transparent; border: none; color: #fff; width: 100%; font-size: 16px; outline: none; resize: none; margin-top: 4px;">{{ auth.user.bio || '' }}</textarea>
+                </div>
+
+                {{-- Gestion des fichiers (Inputs concordants avec saveProfile) --}}
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px; text-align: left;">
+                    <div>
+                        <label style="color: #71767b; font-size: 13px; display: block; margin-bottom: 5px;">Photo de profil</label>
+                        <input type="file" id="editPhotoFile" accept="image/*" style="font-size: 13px; color: #71767b;">
+                    </div>
+                    <div>
+                        <label style="color: #71767b; font-size: 13px; display: block; margin-bottom: 5px;">Bannière</label>
+                        <input type="file" id="editBannerFile" accept="image/*" style="font-size: 13px; color: #71767b;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @end

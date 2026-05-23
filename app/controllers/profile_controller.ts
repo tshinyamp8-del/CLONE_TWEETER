@@ -4,15 +4,18 @@ import app from '@adonisjs/core/services/app'
 import { cuid } from '@adonisjs/core/helpers'
 
 export default class ProfileController {
+  
+  /**
+   * Mettre à jour les informations du profil connecté
+   */
   async update({ request, auth, response }: HttpContext) {
-    const user = auth.user!
+    const user = auth.user! // Sécurisé par le middleware auth de la route
     
-    // Récupération des textes
+    // Application des changements textuels
     user.username = request.input('username', user.username)
-    // si tu as un champ bio dans ta table :
-    // user.bio = request.input('bio', user.bio)
+    user.bio = request.input('bio', user.bio)
 
-    // Gestion de la photo de profil
+    // Gestion de l'avatar
     const avatar = request.file('avatar', { size: '5mb', extnames: ['jpg', 'png', 'jpeg'] })
     if (avatar) {
       const avatarName = `avatar-${cuid()}.${avatar.extname}`

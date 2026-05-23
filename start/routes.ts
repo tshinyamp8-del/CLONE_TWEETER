@@ -33,16 +33,16 @@ router.group(() => {
 
 router.group(() => {
   // Récupérer l'utilisateur connecté actuellement
-  router.get('/me', async ({ auth, response }) => response.json(auth.user))
+  router.get('me', async ({ auth, response }) => response.json(auth.user))
 
   // Flux & Publication
-  router.get('/tweets', [TweetsController, 'index'])
-  router.post('/tweets', [TweetsController, 'store'])
-  router.delete('/tweets/:id', [TweetsController, 'destroy'])
+  router.get('tweets', [TweetsController, 'index'])
+  router.post('tweets', [TweetsController, 'store'])
+  router.delete('tweets/:id', [TweetsController, 'destroy'])
   
   // Interactions
-  router.post('/tweets/:id/like', [TweetsController, 'toggleLike'])
+  router.post('tweets/:id/like', [TweetsController, 'toggleLike'])
   
   // Édition de profil
-  router.put('/profile', [ProfileController, 'update'])
+  router.put('profile', [ProfileController, 'update'])
 }).use(middleware.auth()).prefix('/api')
