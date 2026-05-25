@@ -9,7 +9,7 @@ const FollowsController = () => import('#controllers/follows_controller')
 // 1. PAGE DE GARDE (WELCOME)
 router.get('/', [AuthController, 'index']).as('home')
 
-// Écran Succès de l'inscription (Accessible par tous pour transition)
+// Écran Succès de l'inscription
 router.get('success', [AuthController, 'success']).as('signup.success')
 
 // 2. ENCLOS DES INVITÉS (Uniquement si NON connecté)
@@ -21,16 +21,13 @@ router.group(() => {
   router.post('login', [AuthController, 'storeLogin']).as('login.store')
 }).use(middleware.guest())
 
-// 3. ENCLOS SÉCURISÉ (Uniquement si CONNECTÉ)
+// 3. ENCLOS SÉCURISÉ RENDU VISUEL (Pages HTML classiques Edge)
 router.group(() => {
   router.get('home', [AuthController, 'appHome']).as('app.home')
   router.post('logout', [AuthController, 'destroySession']).as('logout')
-  
-  // 🌟 NOUVELLE ROUTE : Gérer les abonnements / désabonnements
-  router.post('users/:id/follow', [FollowsController, 'toggle']).as('users.follow')
-  
 }).use(middleware.auth())
 
+// 4. ENCLOS SÉCURISÉ API (Requêtes Fetch asynchrones JS)
 router.group(() => {
   // Récupérer l'utilisateur connecté actuellement
   router.get('me', async ({ auth, response }) => response.json(auth.user))
@@ -43,6 +40,9 @@ router.group(() => {
   // Interactions
   router.post('tweets/:id/like', [TweetsController, 'toggleLike'])
   
+  // 🌟 LA ROUTE DU BOUTON SUIVRE PLACÉE AU PARFAIT ENDROIT ICI :
+  router.post('users/:id/follow', [FollowsController, 'toggle']).as('users.follow')
+  
   // Édition de profil
   router.put('profile', [ProfileController, 'update'])
-}).use(middleware.auth()).prefix('/api')
+}).use(middleware.auth()).prefix('/api') // TOUTES ces routes commencent maintenant par /api/

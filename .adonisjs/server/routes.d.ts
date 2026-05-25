@@ -12,11 +12,11 @@ export type ScannedRoutes = {
     'login.store': { paramsTuple?: []; params?: {} }
     'app.home': { paramsTuple?: []; params?: {} }
     'logout': { paramsTuple?: []; params?: {} }
-    'users.follow': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'tweets.index': { paramsTuple?: []; params?: {} }
     'tweets.store': { paramsTuple?: []; params?: {} }
     'tweets.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'tweets.toggle_like': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'users.follow': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'profile.update': { paramsTuple?: []; params?: {} }
   }
   GET: {
@@ -39,9 +39,9 @@ export type ScannedRoutes = {
     'signup.store': { paramsTuple?: []; params?: {} }
     'login.store': { paramsTuple?: []; params?: {} }
     'logout': { paramsTuple?: []; params?: {} }
-    'users.follow': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'tweets.store': { paramsTuple?: []; params?: {} }
     'tweets.toggle_like': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'users.follow': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
     'tweets.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

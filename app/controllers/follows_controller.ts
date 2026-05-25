@@ -1,35 +1,43 @@
+// app/controllers/follows_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import User from '#models/user'
+import db from '@adonisjs/core/services/db'
 
 export default class FollowsController {
-  async toggle({ auth, params, response }: HttpContext) {
-    const currentUser = auth.user!
-    const targetUserId = params.id
+  /**
+   * Gère l'abonnement / désabonnement (Toggle)
+   */
+  async toggle({ params, auth, response }: HttpContext) {
+    const user = auth.user!          // L'utilisateur connecté (celui qui clique)
+    const targetUserId = params.id   // L'utilisateur qu'on veut suivre
 
-    // 1. Sécurité : On ne peut pas se suivre soi-même
-    if (currentUser.id === Number(targetUserId)) {
-      return response.badRequest('Vous ne pouvez pas vous suivre vous-même')
-    }
-
-    // 2. Vérifier si l'utilisateur cible existe
-    const targetUser = await User.findOrFail(targetUserId)
-
-    // 3. Vérifier si on le suit déjà
-    const alreadyFollowing = await currentUser
-      .related('following')
-      .pivotQuery()
-      .where('following_id', targetUser.id)
+    // 1. Vérifier si l'abonnement existe déjà dans la table `follows`
+    const existingFollow = await db
+      .from('follows')
+      .where('follower_id', user.id)       // Remplace par le nom exact de ta colonne si différent
+      .where('following_id', targetUserId)  // Remplace par le nom exact de ta colonne si différent
       .first()
 
-    if (alreadyFollowing) {
-      // Unfollow : On détache la relation
-      await currentUser.related('following').detach([targetUser.id])
-    } else {
-      // Follow : On attache la relation
-      await currentUser.related('following').attach([targetUser.id])
-    }
+    if (existingFollow) {
+      // 2. Si ça existe -> On supprime (Unfollow)
+      await db
+        .from('follows')
+        .where('follower_id', user.id)
+        .where('following_id', targetUserId)
+        .delete()
 
-    // 4. Redirection vers la page d'où vient l'utilisateur
-    return response.redirect().back()
+      return response.json({ following: false })
+    } else {
+      // 3. Si ça n'existe pas -> On crée (Follow)
+      await db
+        .table('follows')
+        .insert({
+          follower_id: user.id,
+          following_id: targetUserId,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+
+      return response.json({ following: true })
+    }
   }
 }

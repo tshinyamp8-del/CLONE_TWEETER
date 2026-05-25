@@ -1,21 +1,45 @@
 /************************************************
- * ETAT GLOBAL & INITIALISATION
+ * ETAT GLOBAL & INITIALISATION ÉTANCHE
  ************************************************/
-let currentUser = null; 
+window.currentUser = null; 
 let selectedMediaFile = null; 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. On récupère d'abord l'utilisateur connecté
-    await fetchCurrentUser();
-    // 2. On charge le thème visuel
-    initThemeAndAccent();
+    // 1. Initialisation des styles de base (Thème)
+    if (typeof initThemeAndAccent === 'function') initThemeAndAccent();
     
-    // 3. Sécurité : On ne charge les tweets QUE si on a un utilisateur connecté
-    if (currentUser) {
-        await loadTweets();
-        await loadUsers();
-    } else {
-        console.warn("Aucun utilisateur connecté détecté. En attente de connexion...");
+    // 2. Détection de la page actuelle grâce à des éléments clés de ton HTML
+    const estSurLeFilActualites = document.getElementById('tweetsContainer') !== null;
+    const estSurFormulaireAuth = document.getElementById('signup-form') !== null || document.getElementById('login-form') !== null;
+
+    try {
+        // 3. Récupération du profil
+        await fetchCurrentUser();
+        
+        // 4. Dispatch des actions selon la page pour éviter les conflits
+        if (window.currentUser && window.currentUser.id) {
+            console.log(`👤 Connecté en tant que : ${window.currentUser.username}`);
+            
+            // Si on est sur le fil d'actualités, on charge les données
+            if (estSurLeFilActualites) {
+                await loadTweets();
+                if (typeof loadUsers === 'function') await loadUsers();
+            }
+            
+            // Si l'utilisateur est connecté mais coincé sur un formulaire d'auth, on le redirige proprement
+            if (estSurFormulaireAuth) {
+                window.location.href = '/home';
+            }
+        } else {
+            console.log("🔓 Aucun utilisateur connecté (Mode Visiteur).");
+            
+            // Si on est sur le fil d'actualités alors qu'on n'est pas connecté, sécurité :
+            if (estSurLeFilActualites) {
+                window.location.href = '/login';
+            }
+        }
+    } catch (error) {
+        console.error("Erreur critique lors de l'initialisation :", error);
     }
 });
 
@@ -624,41 +648,43 @@ function togglePasswordVisibility(inputId, iconId) {
 }
 
 async function toggleFollow(userId) {
-    const button = document.getElementById(`follow-btn-${userId}`)
-    const isFollowing = button.getAttribute('data-following') === 'true'
-  
+    const button = document.getElementById(`follow-btn-${userId}`);
+    if (!button) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     try {
-      // Envoi de la requête au backend AdonisJS
-      const response = await fetch(`/users/${userId}/follow`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          // 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') // Décommente si Shield bloque
+        const response = await fetch(`/api/users/${userId}/follow`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'x-csrf-token': csrfToken
+            }
+        });
+
+        if (!response.ok) throw new Error('Erreur réseau');
+        const data = await response.json();
+
+        // Gestion du bouton
+        const isFollowing = data.following !== undefined ? data.following : data.isFollowing;
+        if (isFollowing) {
+            button.setAttribute('data-following', 'true');
+            button.textContent = 'Abonné';
+            button.style.backgroundColor = 'transparent';
+            button.style.color = '#fff';
+            button.style.border = '1px solid #536471';
+        } else {
+            button.setAttribute('data-following', 'false');
+            button.textContent = 'Suivre';
+            button.style.backgroundColor = '#fff';
+            button.style.color = '#0f1419';
+            button.style.border = 'none';
         }
-      })
-  
-      if (!response.ok) throw new Error('Erreur réseau')
-      const data = await response.json()
-  
-      // 🔄 Mise à jour visuelle du bouton selon la réponse du serveur
-      if (data.following) {
-        button.setAttribute('data-following', 'true')
-        button.textContent = 'Abonné'
-        button.style.backgroundColor = 'transparent'
-        button.style.color = '#fff'
-        button.style.border = '1px solid #536471'
-      } else {
-        button.setAttribute('data-following', 'false')
-        button.textContent = 'Suivre'
-        button.style.backgroundColor = '#fff'
-        button.style.color = '#0f1419'
-        button.style.border = 'none'
-      }
     } catch (error) {
-      console.error("Impossible de modifier le follow :", error)
+        console.error("Impossible de modifier le follow :", error);
     }
-  }
+}
   
   // 🎨 Effet X (Twitter) : Quand on passe la souris sur "Abonné", il affiche "Se désabonner" en rouge
   function handleMouseOver(btn) {
