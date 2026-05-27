@@ -1,6 +1,6 @@
 // app/controllers/follows_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import db from '@adonisjs/core/services/db'
+import db from '@adonisjs/lucid/services/db'
 
 export default class FollowsController {
   /**

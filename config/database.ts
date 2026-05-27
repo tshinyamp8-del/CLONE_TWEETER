@@ -1,26 +1,29 @@
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/lucid'
-import env from '#start/env' // 👈 1. Import indispensable pour lire le .env
+import env from '#start/env'
+import fs from 'node:fs' // 👈 Import essentiel pour détecter le volume Fly
+
+// On détecte si on est sur Fly.io en vérifiant si le dossier /data existe
+const isFlyIo = fs.existsSync('/data')
 
 const dbConfig = defineConfig({
   /**
-   * Default connection used for all queries.
+   * Connexion par défaut : Si on est sur Fly, on FORCE 'sqlite'. 
+   * Sinon, on prend la variable d'environnement ou 'mysql' par défaut pour ton local.
    */
-  connection: 'mysql', // 👈 2. On change 'sqlite' par 'mysql'
+  connection: isFlyIo ? 'sqlite' : (env.get('DB_CONNECTION') || 'mysql'),
 
-  /**
-   * Pretty-print SQL debug output in development logs.
-   */
   prettyPrintDebugQueries: true,
 
   connections: {
     /**
-     * SQLite connection (default).
+     * Configuration SQLite unifiée
      */
     sqlite: {
       client: 'better-sqlite3',
       connection: {
-        filename: app.tmpPath('db.sqlite3'),
+        // Il va lire directement la variable DB_DATABASE (" /data/sqlite.db ") injectée par le fly.toml
+        filename: env.get('DB_DATABASE') || app.tmpPath('db.sqlite3'),
       },
       useNullAsDefault: true,
       migrations: {
@@ -31,7 +34,7 @@ const dbConfig = defineConfig({
     },
 
     /**
-     * MySQL / MariaDB connection. 👈 3. Décommenté et activé
+     * Configuration MySQL pour ton développement local
      */
     mysql: {
       client: 'mysql2',

@@ -1,7 +1,6 @@
 // app/controllers/profile_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
-import { cuid } from '@adonisjs/core/helpers'
 
 export default class ProfileController {
   
@@ -18,7 +17,7 @@ export default class ProfileController {
     // Gestion de l'avatar
     const avatar = request.file('avatar', { size: '5mb', extnames: ['jpg', 'png', 'jpeg'] })
     if (avatar) {
-      const avatarName = `avatar-${cuid()}.${avatar.extname}`
+      const avatarName = `avatar-${Date.now()}-${Math.random().toString(36).substring(2)}.${avatar.extname}`
       await avatar.move(app.publicPath('uploads/profiles'), { name: avatarName, overwrite: true })
       user.avatarUrl = `/uploads/profiles/${avatarName}`
     }
@@ -26,7 +25,7 @@ export default class ProfileController {
     // Gestion de la bannière
     const banner = request.file('banner', { size: '10mb', extnames: ['jpg', 'png', 'jpeg'] })
     if (banner) {
-      const bannerName = `banner-${cuid()}.${banner.extname}`
+      const bannerName = `banner-${Date.now()}-${Math.random().toString(36).substring(2)}.${banner.extname}`
       await banner.move(app.publicPath('uploads/profiles'), { name: bannerName, overwrite: true })
       user.bannerUrl = `/uploads/profiles/${bannerName}`
     }

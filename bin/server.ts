@@ -10,7 +10,7 @@ import http from 'node:http' // 🌟 Module natif Node.js
 // sur absolument TOUS les serveurs HTTP créés dans cette instance (Adonis inclus)
 http.createServer = ((originalCreateServer) => {
   return function (this: any, ...args: any[]) {
-    const server = originalCreateServer.apply(this, args)
+    const server = originalCreateServer.apply(this, args as any)
     server.timeout = 0         // Temps infini pour ta vidéo de 60 min
     server.headersTimeout = 0  // Désactive le timeout des en-têtes
     return server

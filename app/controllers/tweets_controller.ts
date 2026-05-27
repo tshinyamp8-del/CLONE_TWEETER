@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
-import { stringHelpers } from '@poppinss/utils' 
+// import { string } from '@adonisjs/core/helpers' 
 import fs from 'node:fs'
-import { Bouncer } from '@adonisjs/bouncer'
-import { policies } from '#policies/main' // 🌟 Importation des politiques
+// import { Bouncer } from '@adonisjs/bouncer'
+// import { policies } from '#policies/main' // 🌟 Importation des politiques
 
 export default class TweetsController {
   
@@ -141,8 +141,7 @@ export default class TweetsController {
     const tweet = await Tweet.findOrFail(params.id)
 
     // 🌟 VÉRIFICATION SÉCURITÉ DIRECTE (Alternative parfaite à Bouncer)
-    const authorId = tweet.userId || tweet.user_id || tweet.$attributes?.userId || tweet.$attributes?.user_id
-    
+    const authorId = tweet.userId || tweet.$attributes?.userId
     if (Number(user.id) !== Number(authorId)) {
       return response.status(403).json({ error: 'Suppression interdite. Ce tweet ne vous appartient pas.' })
     }

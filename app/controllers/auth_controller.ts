@@ -15,26 +15,28 @@ export default class AuthController {
     return view.render('pages/login')
   }
 
-  async storeRegister({ request, response }: HttpContext) {
+  async storeRegister({ request, auth, response }: HttpContext) { // 👈 Ajout de 'auth' ici
     const payload = request.only(['username', 'email', 'password'])
   
     try {
-      // On crée l'instance pour laisser les mixins d'Adonis v7 agir sur les propriétés
       const user = new User()
       user.username = payload.username
-      user.fullName = payload.username // Évite l'erreur de valeur par défaut MySQL
+      user.fullName = payload.username 
       user.email = payload.email
-      user.password = payload.password // Le mixin d'authentification s'occupe du hachage unique ici
+      user.password = payload.password 
   
       await user.save()
+
+      // 💡 ÉTAPE CRUCIALE : Connecter automatiquement l'utilisateur qui vient de s'inscrire
+      await auth.use('web').login(user)
   
-      return response.redirect().toRoute('signup.success')
+      // 🚀 REDIRECTION DIRECTE : On l'envoie sur l'application connectée
+      return response.redirect().toRoute('app.home')
     } catch (error) {
-      console.error(error)
+      console.error("Erreur lors de l'inscription :", error)
       return response.redirect().back()
     }
   }
-
   async storeLogin({ request, auth, response }: HttpContext) {
     const { email, password } = request.only(['email', 'password'])
 

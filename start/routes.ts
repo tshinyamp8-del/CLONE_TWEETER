@@ -29,20 +29,39 @@ router.group(() => {
 
 // 4. ENCLOS SÉCURISÉ API (Requêtes Fetch asynchrones JS)
 router.group(() => {
-  // Récupérer l'utilisateur connecté actuellement
-  router.get('me', async ({ auth, response }) => response.json(auth.user))
+  
+  // 💡 Remplacer l'ancienne route par celle-ci pour éviter le JSON vide
+  router.get('me', async ({ auth, response }) => {
+    try {
+      // On vérifie si Adonis arrive à récupérer l'utilisateur via la session
+      await auth.check() 
+      
+      if (!auth.user) {
+        // Si aucun utilisateur n'est connecté, on renvoie un objet JSON valide
+        return response.ok({ user: null, authenticated: false })
+      }
+      
+      // Si l'utilisateur est connecté, on renvoie ses infos
+      return response.ok({ user: auth.user, authenticated: true })
+    } catch {
+      // En cas de bug ou de token expiré, on renvoie aussi un JSON valide
+      return response.ok({ user: null, authenticated: false })
+    }
+  })
 
-  // Flux & Publication
-  router.get('tweets', [TweetsController, 'index'])
-  router.post('tweets', [TweetsController, 'store'])
-  router.delete('tweets/:id', [TweetsController, 'destroy'])
-  
-  // Interactions
-  router.post('tweets/:id/like', [TweetsController, 'toggleLike'])
-  
-  // 🌟 LA ROUTE DU BOUTON SUIVRE PLACÉE AU PARFAIT ENDROIT ICI :
-  router.post('users/:id/follow', [FollowsController, 'toggle']).as('users.follow')
-  
-  // Édition de profil
-  router.put('profile', [ProfileController, 'update'])
-}).use(middleware.auth()).prefix('/api') // TOUTES ces routes commencent maintenant par /api/
+  // Le reste des routes nécessite obligatoirement d'être connecté
+  router.group(() => {
+    // Flux & Publication
+    router.get('tweets', [TweetsController, 'index'])
+    router.post('tweets', [TweetsController, 'store'])
+    router.delete('tweets/:id', [TweetsController, 'destroy'])
+    
+    // Interactions
+    router.post('tweets/:id/like', [TweetsController, 'toggleLike'])
+    router.post('users/:id/follow', [FollowsController, 'toggle']).as('users.follow')
+    
+    // Édition de profil
+    router.put('profile', [ProfileController, 'update'])
+  }).use(middleware.auth()) // Protection appliquée uniquement sur ces actions
+
+}).prefix('/api')

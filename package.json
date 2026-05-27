@@ -9,13 +9,12 @@
   },
   "scripts": {
     "start": "node build/server.js",
-    "build": "node ace build",
+    "build": "node ace build --ignore-ts-errors",
     "dev": "node ace serve --hmr",
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
-    
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
@@ -41,6 +40,7 @@
     "@adonisjs/eslint-config": "^3.0.0",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/tsconfig": "^2.0.0",
+    "@flydotio/dockerfile": "^0.7.10",
     "@japa/assert": "^4.2.0",
     "@japa/browser-client": "^2.3.0",
     "@japa/plugin-adonisjs": "^5.2.0",

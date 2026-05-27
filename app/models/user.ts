@@ -2,7 +2,7 @@ import { UserSchema } from '#database/schema'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
-import { column, manyToMany } from '@adonisjs/lucid/orm' // 🌟 Ajout de manyToMany ici
+import { column, manyToMany } from '@adonisjs/lucid/orm' 
 import type * as relations from '@adonisjs/lucid/types/relations'
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
@@ -12,6 +12,26 @@ export default class User extends compose(UserSchema, withAuthFinder(hash)) {
 
   @column({ serializeAs: null })
   declare password: string
+
+  // ==========================================
+  // 🌟 PROPRIÉTÉS AJOUTÉES POUR LE PROFIL & TS
+  // ==========================================
+
+  @column()
+  declare fullName: string | null
+
+  @column()
+  declare bio: string | null
+
+  @column()
+  declare avatarUrl: string | null
+
+  @column()
+  declare bannerUrl: string | null
+
+  // ==========================================
+  // 💡 GETTER POUR LES INITIALES
+  // ==========================================
 
   get initials() {
     const [first, last] = this.fullName ? this.fullName.split(' ') : this.email.split('@')
