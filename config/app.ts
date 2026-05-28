@@ -14,6 +14,12 @@ export const appUrl = env.get('APP_URL')
  */
 export const http = defineConfig({
   /**
+   * FARE CONFIANCE AU PROXY DE RENDER (À RAJOUTER ABSOLUMENT)
+   * Permet à AdonisJS de détecter le protocole HTTPS géré par Render
+   */
+  trustProxy: () => true,
+
+  /**
    * Generate a unique request ID for each incoming HTTP request.
    * Useful for request tracing and debugging in logs.
    */
@@ -44,6 +50,7 @@ export const http = defineConfig({
      */
     forwardQueryString: true,
   },
+ 
 
   /**
    * Manage cookies configuration. The settings for the session id cookie are
