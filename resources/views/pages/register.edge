@@ -3,42 +3,37 @@
   <i class="fa-brands fa-x-twitter logo-small"></i>
   <h2>Créer votre compte</h2>
   
-  {{-- 1. Ajout du formulaire pointant vers la route POST de ton contrôleur --}}
+  {{-- Affichage d'une erreur globale si l'enregistrement échoue --}}
+  @if(flashMessages.has('errors.global'))
+    <div style="color: #ff3333; margin-bottom: 15px; font-weight: bold;">
+      {{ flashMessages.get('errors.global') }}
+    </div>
+  @endif
+
   <form action="{{ route('signup.store') }}" method="POST">
-    
-    {{-- Protection CSRF obligatoire dans AdonisJS --}}
     {{ csrfField() }}
 
-    {{-- 2. Ajout de l'attribut name="username" --}}
-    <input id="registerName" type="text" name="username" placeholder="Nom" required>
+    {{-- Utilisation de old() pour conserver la saisie --}}
+    <input id="registerName" type="text" name="username" placeholder="Nom" value="{{ old('username') || '' }}" required>
     
-    {{-- 2. Ajout de l'attribut name="email" --}}
-    <input id="registerEmail" type="email" name="email" placeholder="Email" required>
+    <input id="registerEmail" type="email" name="email" placeholder="Email" value="{{ old('email') || '' }}" required>
     
-    <div class="password-container" style="position: relative; width: 100%; display: block; box-sizing: border-box;">
-  
-  <input 
-    id="registerPassword" 
-    type="password" 
-    name="password" 
-    placeholder="Mot de passe" 
-    style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
-    required
-  >
-  
-  {{-- 🌟 ZONE DE CENTRAGE ABSOLU ET FORCÉ --}}
-  <span 
-    onclick="togglePassword('registerPassword', 'toggleRegisterPassword')" 
-    style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
-  >
-    <i 
-      class="fa-regular fa-eye" 
-      id="toggleRegisterPassword" 
-      style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"
-    ></i>
-  </span>
-
-</div>
+    <div class="password-container" style="position: relative; width: 100%; display: block; box-sizing: border-box; margin-bottom: 15px;">
+      <input 
+        id="registerPassword" 
+        type="password" 
+        name="password" 
+        placeholder="Mot de passe" 
+        style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
+        required
+      >
+      <span 
+        onclick="togglePassword('registerPassword', 'toggleRegisterPassword')" 
+        style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+      >
+        <i class="fa-regular fa-eye" id="toggleRegisterPassword" style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"></i>
+      </span>
+    </div>
 
     <label class="dob-label">Date de naissance</label>
     <div class="dob-container">
@@ -61,7 +56,6 @@
         <input type="number" id="birthYear" placeholder="Année">
     </div>
 
-    {{-- 3. Changement du bouton en type="submit" et retrait du onclick --}}
     <button type="submit" class="next-btn">
         Suivant
     </button>

@@ -15,7 +15,7 @@ export default class AuthController {
     return view.render('pages/login')
   }
 
-  async storeRegister({ request, auth, response }: HttpContext) { // 👈 Ajout de 'auth' ici
+  async storeRegister({ request, auth, response, session }: HttpContext) { // 👈 Ajout de 'session'
     const payload = request.only(['username', 'email', 'password'])
   
     try {
@@ -26,17 +26,19 @@ export default class AuthController {
       user.password = payload.password 
   
       await user.save()
-
-      // 💡 ÉTAPE CRUCIALE : Connecter automatiquement l'utilisateur qui vient de s'inscrire
+  
       await auth.use('web').login(user)
   
-      // 🚀 REDIRECTION DIRECTE : On l'envoie sur l'application connectée
       return response.redirect().toRoute('app.home')
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error)
+      
+      // 💡 Transmet l'erreur textuelle au formulaire pour affichage
+      session.flash('errors', { global: `Erreur d'inscription : ${error.message || error}` })
       return response.redirect().back()
     }
   }
+  
   async storeLogin({ request, auth, response }: HttpContext) {
     const { email, password } = request.only(['email', 'password'])
 

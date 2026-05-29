@@ -13,9 +13,10 @@ router.get('/', [AuthController, 'index']).as('home')
 router.get('success', [AuthController, 'success']).as('signup.success')
 
 // 2. ENCLOS DES INVITÉS (Uniquement si NON connecté)
+// Remplacez le bloc existant du groupe "guest" par celui-ci :
 router.group(() => {
   router.get('signup', [AuthController, 'register']).as('signup')
-  router.post('signup', [AuthController, 'storeRegister']).as('signup.store')
+  router.post('signup', [AuthController, 'storeRegister']).as('signup.store') // 👈 On s'assure du nom ici
   
   router.get('login', [AuthController, 'login']).as('login')
   router.post('login', [AuthController, 'storeLogin']).as('login.store')
