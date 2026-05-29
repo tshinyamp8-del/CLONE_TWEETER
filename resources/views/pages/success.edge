@@ -6,11 +6,12 @@
         <h1 id="welcomeTitle">Bienvenue sur X !</h1>
 
         <p class="welcome-text">
-            Votre compte a été créé avec succés. 
-            Decouvrez à présent ce qui se passe dans le monde avec le réseau social X
+            Votre compte a été créé avec succès. 
+            Découvrez à présent ce qui se passe dans le monde avec le réseau social X
         </p>
 
-        <button class="next-btn" onclick="window.location.href='{{ route('app.home') }}'" style="margin-top: 40px;">
+        {{-- 🚀 MODIFICATION : Redirection vers l'écran de connexion 'login' après validation --}}
+        <button class="next-btn" onclick="window.location.href='{{ route('login') }}'" style="margin-top: 40px;">
             C'est parti
         </button>
     </div>

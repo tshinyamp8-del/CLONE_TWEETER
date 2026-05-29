@@ -15,7 +15,7 @@ export default class AuthController {
     return view.render('pages/login')
   }
 
-  async storeRegister({ request, auth, response, session }: HttpContext) { // 👈 Ajout de 'session'
+  async storeRegister({ request, response, session }: HttpContext) {
     const payload = request.only(['username', 'email', 'password'])
   
     try {
@@ -27,17 +27,16 @@ export default class AuthController {
   
       await user.save()
   
-      await auth.use('web').login(user)
-  
-      return response.redirect().toRoute('app.home')
+      // 🚀 MODIFICATION : On ne connecte pas l'utilisateur immédiatement.
+      // On le redirige directement vers la page "success" comme demandé.
+      return response.redirect().toRoute('signup.success')
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error)
-      
-      // 💡 Transmet l'erreur textuelle au formulaire pour affichage
       session.flash('errors', { global: `Erreur d'inscription : ${error.message || error}` })
       return response.redirect().back()
     }
   }
+  
   
   async storeLogin({ request, auth, response }: HttpContext) {
     const { email, password } = request.only(['email', 'password'])
