@@ -2,7 +2,8 @@ import { UserSchema } from '#database/schema'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
-import { column, manyToMany } from '@adonisjs/lucid/orm' 
+// 💡 AJOUT : Importation du décorateur 'beforeSave' ici
+import { column, manyToMany, beforeSave } from '@adonisjs/lucid/orm' 
 import type * as relations from '@adonisjs/lucid/types/relations'
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
@@ -12,6 +13,16 @@ export default class User extends compose(UserSchema, withAuthFinder(hash)) {
 
   @column({ serializeAs: null })
   declare password: string
+
+  // ==========================================
+  // 💡 HOOK DE HACHAGE AUTOMATIQUE DU MOT DE PASSE
+  // ==========================================
+  @beforeSave()
+  static async hashPassword(user: User) {
+    if (user.$dirty.password) {
+      user.password = await hash.make(user.password)
+    }
+  }
 
   // ==========================================
   // 🌟 PROPRIÉTÉS AJOUTÉES POUR LE PROFIL & TS

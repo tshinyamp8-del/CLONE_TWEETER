@@ -19,16 +19,15 @@ export default class AuthController {
     const payload = request.only(['username', 'email', 'password'])
   
     try {
-      const user = new User()
-      user.username = payload.username
-      user.fullName = payload.username 
-      user.email = payload.email
-      user.password = payload.password 
+      // 🚀 CORRECTION : Utilisation de User.create pour activer le hachage automatique
+      await User.create({
+        username: payload.username,
+        fullName: payload.username,
+        email: payload.email,
+        password: payload.password
+      })
   
-      await user.save()
-  
-      // 🚀 MODIFICATION : On ne connecte pas l'utilisateur immédiatement.
-      // On le redirige directement vers la page "success" comme demandé.
+      // Redirection vers la page "success" comme vous le souhaitez
       return response.redirect().toRoute('signup.success')
     } catch (error) {
       console.error("Erreur lors de l'inscription :", error)
@@ -36,6 +35,7 @@ export default class AuthController {
       return response.redirect().back()
     }
   }
+  
   
   
   async storeLogin({ request, auth, response }: HttpContext) {
