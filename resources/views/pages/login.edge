@@ -3,42 +3,49 @@
     <i class="fa-brands fa-x-twitter logo-small"></i>
     <h2>Connectez-vous à X</h2>
     
-    {{-- 1. Correction de l'action vers la bonne route --}}
+    {{-- 🌟 1. BLOC DE DIAGNOSTIC : Affiche l'erreur technique exacte sur votre écran --}}
+    @if(flashMessages.has('errors.login'))
+      <div style="color: #ff3333; background: #ffe6e6; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; font-size: 14px; border: 1px solid #ffcccc; text-align: center;">
+        {{ flashMessages.get('errors.login') }}
+      </div>
+    @endif
+    
     <form action="{{ route('login.store') }}" method="POST">
         
-        {{-- 2. Ajout du champ de sécurité CSRF --}}
         {{ csrfField() }}
 
-        {{-- Correction du name en "email" pour s'aligner sur le contrôleur --}}
-        <input id="loginEmail" name="email" type="email" placeholder="Email" required>
+        {{-- 🌟 2. PERSISTANCE : Ajout de value pour que l'email ne disparaisse plus --}}
+        <input 
+          id="loginEmail" 
+          name="email" 
+          type="email" 
+          value="{{ old('email') || '' }}" 
+          placeholder="Email" 
+          required
+        >
         
         <div class="password-container" style="position: relative; width: 100%; display: block; box-sizing: border-box;">
-  
-  {{-- 🌟 L'input du Login avec les mêmes paddings exacts --}}
-  <input 
-    id="loginPassword" 
-    type="password" 
-    name="password" 
-    placeholder="Mot de passe" 
-    style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
-    required
-  >
-  
-  {{-- 🌟 La zone de l'œil avec les ID adaptés pour le Login --}}
-  <span 
-    onclick="togglePassword('loginPassword', 'toggleLoginPassword')" 
-    style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
-  >
-    <i 
-      class="fa-regular fa-eye" 
-      id="toggleLoginPassword" 
-      style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"
-    ></i>
-  </span>
+          <input 
+            id="loginPassword" 
+            type="password" 
+            name="password" 
+            placeholder="Mot de passe" 
+            style="width: 100%; padding: 16px 45px 16px 16px; background: #000000; border: 1px solid #333639; border-radius: 4px; color: #ffffff; font-size: 16px; outline: none; box-sizing: border-box; display: block;" 
+            required
+          >
+          
+          <span 
+            onclick="togglePassword('loginPassword', 'toggleLoginPassword')" 
+            style="position: absolute; right: 12px; top: 0; bottom: 0; margin: auto 0; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;"
+          >
+            <i 
+              class="fa-regular fa-eye" 
+              id="toggleLoginPassword" 
+              style="color: #71767b; font-size: 18px; line-height: 1; display: inline-block; vertical-align: middle;"
+            ></i>
+          </span>
+        </div>
 
-</div>
-
-        {{-- 3. Changement du type en "submit" et retrait du onclick --}}
         <button type="submit" class="next-btn">Se connecter</button>
     </form>
     

@@ -50,7 +50,7 @@ const sessionConfig = defineConfig({
      * When true, the cookie is only sent over HTTPS connections.
      * Enabled in production for security.
      */
-    secure: true,
+    secure:  process.env.NODE_ENV === 'production',
 
     /**
      * Controls when cookies are sent with cross-site requests.
