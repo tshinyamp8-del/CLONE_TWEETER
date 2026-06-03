@@ -299,80 +299,91 @@ body {
 }
 
 /* ===================================================
-   3. LAYOUT PRINCIPAL DE L'APPLICATION
+   3. LAYOUT PRINCIPAL DE L'APPLICATION (CORRIGÉ)
    =================================================== */
 .app {
     display: grid;
-    /* La colonne centrale devient flexible (1fr) au lieu de rester bloquée à 600px */
-    grid-template-columns: 275px 1fr 350px;
+    /* La colonne centrale est limitée à 600px maximum pour respecter le design de X */
+    grid-template-columns: 275px minmax(500px, 600px) 350px;
     justify-content: center;
     width: 100%;
-    /* On augmente légèrement la largeur max pour donner de l'air */
     max-width: 1280px;
     margin: 0 auto;
+    min-height: 100vh;
 }
 
-/* Lignes 316 à 326 */
-.main-content {
-    border-right: 1px solid #333;
-    border-left: 1px solid #333;
+/* Flux Central (Lignes 316 à 326 réajustées) */
+main, .main-content {
+    border-right: 1px solid #2f3336;
+    border-left: 1px solid #2f3336;
     width: 100%;
-    max-width: 600px;
     min-width: 0; 
     overflow-x: hidden;
 }
 
-
-/* Lignes 328 à 337 */
-@media (max-width: 1100px) {
+/* Écrans Intermédiaires / Tablettes (Lignes 328 à 337) */
+@media (max-width: 1280px) {
     .app {
-        /* On passe à 2 colonnes : la sidebar réduite (80px) et le reste (1fr) */
-        grid-template-columns: 80px 1fr;
-        justify-content: start; /* Aligne à gauche pour laisser de la place */
-    }
-
-    .right-sidebar {
-        display: none; /* Cache les tendances sur tablette et mobile */
-    }
-
-    /* On réduit aussi la sidebar pour ne garder que les icônes */
-    .nav-item span, .post-btn-sidebar span {
-        display: none; 
+        /* On retire la colonne de droite et on ajuste le centre */
+        grid-template-columns: 275px minmax(500px, 600px);
     }
     
-    .sidebar {
-        align-items: center; /* Centre les icônes */
-        padding: 10px 0;
+    aside:last-of-type, .right-sidebar {
+        display: none; /* Cache les tendances */
     }
 }
 
+@media (max-width: 1020px) {
+    .app {
+        /* On réduit la sidebar gauche à 80px (icônes uniquement) */
+        grid-template-columns: 80px minmax(0, 1fr);
+        justify-content: start;
+    }
 
-/* Lignes 339 à 354 */
+    /* On cache les textes à côté des icônes dans votre HTML */
+    .app aside:first-of-type span, 
+    .nav-links span, 
+    .nav-item span, 
+    .post-btn-sidebar span {
+        display: none !important; 
+    }
+    
+    /* On centre les icônes de la sidebar gauche */
+    .app aside:first-of-type {
+        align-items: center !important;
+        padding: 10px 0 !important;
+    }
+}
+
+/* Écrans Mobiles (Lignes 339 à 354) */
 @media (max-width: 700px) {
     .app {
-        display: block; /* On enlève la grille pour empiler les éléments */
+        display: block; /* On repasse en bloc simple pour le mobile */
     }
 
-    .sidebar {
-        display: none; /* On cache la barre latérale sur téléphone */
+    /* On cache la sidebar latérale */
+    .app aside:first-of-type, .sidebar {
+        display: none !important; 
     }
 
+    /* Barre de navigation mobile du bas (si vous l'avez dans votre HTML) */
     .mobile-nav {
         display: flex;
         position: fixed;
         bottom: 0;
+        left: 0;
         width: 100%;
         height: 55px;
-        background: black; /* Changé en noir pour correspondre au thème */
-        border-top: 1px solid #333;
+        background: #000;
+        border-top: 1px solid #2f3336;
         justify-content: space-around;
         align-items: center;
         z-index: 1000;
     }
     
-    /* On ajoute un espace en bas du contenu pour ne pas que le dernier tweet soit caché par la barre */
-    .main-content {
-        padding-bottom: 60px;
+    main, .main-content {
+        border: none; /* On enlève les bordures latérales sur smartphone */
+        padding-bottom: 60px; /* Évite que la barre du bas masque le dernier tweet */
     }
 }
 
