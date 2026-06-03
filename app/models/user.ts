@@ -1,49 +1,54 @@
-import { UserSchema } from '#database/schema'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
-// 💡 AJOUT : Importation du décorateur 'beforeSave' ici
-import { column, manyToMany, beforeSave } from '@adonisjs/lucid/orm' 
+import { DateTime } from 'luxon'
+import { BaseModel, column, manyToMany, beforeSave } from '@adonisjs/lucid/orm' 
 import type * as relations from '@adonisjs/lucid/types/relations'
 
-export default class User extends compose(UserSchema, withAuthFinder(hash)) {
-  
+const AuthFinderMixin = withAuthFinder(hash)
+
+export default class User extends compose(BaseModel, AuthFinderMixin) {
+  @column({ isPrimary: true })
+  declare id: number
+
+  @column()
+  declare email: string
+
   @column()
   declare username: string
 
   @column({ serializeAs: null })
   declare password: string
 
-  // ==========================================
-  // 💡 HOOK DE HACHAGE AUTOMATIQUE DU MOT DE PASSE
-  // ==========================================
-  @beforeSave()
-  static async hashPassword(user: User) {
-    if (user.$dirty.password) {
-      user.password = await hash.make(user.password)
-    }
-  }
-
-  // ==========================================
-  // 🌟 PROPRIÉTÉS AJOUTÉES POUR LE PROFIL & TS
-  // ==========================================
-
-  @column()
+  @column({ columnName: 'full_name' }) // 🌟 Mappage MySQL strict
   declare fullName: string | null
 
   @column()
   declare bio: string | null
 
-  @column()
+  @column({ columnName: 'avatar_url' }) // 🌟 Mappage MySQL strict
   declare avatarUrl: string | null
 
-  @column()
+  @column({ columnName: 'banner_url' }) // 🌟 Mappage MySQL strict
   declare bannerUrl: string | null
+
+  // ==========================================
+  // 🌟 FIX : AJOUT DES TIMESTAMPS AUTOMATIQUES EXPLICITES
+  // ==========================================
+  @column.dateTime({ columnName: 'created_at', autoCreate: true })
+  declare createdAt: DateTime
+
+  @column.dateTime({ columnName: 'updated_at', autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+
+  // ==========================================
+  // 💡 HOOK DE HACHAGE AUTOMATIQUE DU MOT DE PASSE
+  // ==========================================
+ 
 
   // ==========================================
   // 💡 GETTER POUR LES INITIALES
   // ==========================================
-
   get initials() {
     const [first, last] = this.fullName ? this.fullName.split(' ') : this.email.split('@')
     if (first && last) {
@@ -55,10 +60,6 @@ export default class User extends compose(UserSchema, withAuthFinder(hash)) {
   // ==========================================
   // 🌟 RELATIONS D'ABONNEMENTS (MANY-TO-MANY)
   // ==========================================
-
-  /**
-   * Les personnes que CET utilisateur suit
-   */
   @manyToMany(() => User, {
     pivotTable: 'follows',
     localKey: 'id',
@@ -68,9 +69,6 @@ export default class User extends compose(UserSchema, withAuthFinder(hash)) {
   })
   declare following: relations.ManyToMany<typeof User>
 
-  /**
-   * Les personnes qui suivent CET utilisateur (ses abonnés)
-   */
   @manyToMany(() => User, {
     pivotTable: 'follows',
     localKey: 'id',

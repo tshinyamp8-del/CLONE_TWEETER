@@ -48,9 +48,19 @@ async function fetchCurrentUser() {
     try {
         const response = await fetch('/api/me');
         if (response.ok) {
-            // 🌟 On stocke le résultat dans l'objet global window
-            window.currentUser = await response.json();
-            console.log("👤 Utilisateur connecté détecté :", window.currentUser.username);
+            const data = await response.json();
+        
+            if (!data.authenticated || !data.user) {
+                window.currentUser = null;
+                return;
+            }
+        
+            window.currentUser = data.user;
+        
+            console.log(
+                "👤 Utilisateur connecté détecté :",
+                window.currentUser.username
+            );
             
             // Tout s'exécute parfaitement à la suite !
             updateProfileUI();

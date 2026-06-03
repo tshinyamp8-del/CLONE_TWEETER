@@ -17,19 +17,34 @@ export default class SessionController {
   /**
    * Authenticate user credentials and create a new session
    */
-  async store({ request, auth, response }: HttpContext) {
-    const { email, password } = request.all()
-    const user = await User.verifyCredentials(email, password)
-
-    await auth.use('web').login(user)
-    response.redirect().toRoute('home')
-  }
-
   /**
-   * Log out the current user and destroy their session
+   * Authenticate user credentials and create a new session
    */
-  async destroy({ auth, response }: HttpContext) {
-    await auth.use('web').logout()
-    response.redirect().toRoute('login')
+  async store({ request, auth, response, session }: HttpContext) {
+    const { email, password } = request.only(['email', 'password'])
+
+    try {
+      // 1. Vérification des identifiants (lève une erreur si invalide)
+      const user = await User.verifyCredentials(email, password)
+
+      // 2. Connexion de l'utilisateur
+      await auth.use('web').login(user)
+      
+      // 3. Persistance de la session avant redirection
+      await session.commit()
+
+      // 4. Redirection explicite avec un RETURN
+      return response.redirect().toRoute('home') // Assurez-vous que le nom de la route est bien 'home' ou 'app.home'
+      
+    } catch (error) {
+      console.error("Échec de l'authentification :", error.message)
+      
+      // Renvoie l'erreur au formulaire Edge
+      session.flash('errors', { login: 'Échec de connexion : Invalid user credentials' })
+      // Conserve l'email saisi pour le confort de l'utilisateur
+      session.flash('email', email) 
+
+      // Retour à la page de login
+      return response.redirect().back()
+    }
   }
-}

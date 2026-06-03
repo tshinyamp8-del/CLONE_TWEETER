@@ -1,55 +1,36 @@
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/lucid'
 import env from '#start/env'
-import fs from 'node:fs' // 👈 Import essentiel pour détecter le volume Fly
-
-// On détecte si on est sur Fly.io en vérifiant si le dossier /data existe
-const isFlyIo = fs.existsSync('/data')
 
 const dbConfig = defineConfig({
   /**
-   * Connexion par défaut : Si on est sur Fly, on FORCE 'sqlite'. 
-   * Sinon, on prend la variable d'environnement ou 'mysql' par défaut pour ton local.
+   * On force l'utilisation de MySQL pour le local ET la production
    */
-  connection: isFlyIo ? 'sqlite' : (env.get('DB_CONNECTION') || 'mysql'),
+  connection: 'mysql',
 
   prettyPrintDebugQueries: true,
 
   connections: {
     /**
-     * Configuration SQLite unifiée
-     */
-    sqlite: {
-      client: 'better-sqlite3',
-      connection: {
-        // Il va lire directement la variable DB_DATABASE (" /data/sqlite.db ") injectée par le fly.toml
-        filename: env.get('DB_DATABASE') || app.tmpPath('db.sqlite3'),
-      },
-      useNullAsDefault: true,
-      migrations: {
-        naturalSort: true,
-        paths: ['database/migrations'],
-      },
-      debug: app.inDev,
-    },
-
-    /**
-     * Configuration MySQL pour ton développement local
+     * Configuration MySQL unifiée (Local et Production Clever Cloud)
      */
     mysql: {
       client: 'mysql2',
       connection: {
-        host: env.get('DB_HOST') || '127.0.0.1',
+        host: env.get('DB_HOST'),
         port: Number(env.get('DB_PORT')) || 3306,
-        user: env.get('DB_USER') || 'root',
-        password: env.get('DB_PASSWORD') || '',
-        database: env.get('DB_DATABASE') || 'mon_clone_x',
+        user: env.get('DB_USER'),
+        password: env.get('DB_PASSWORD'),
+        database: env.get('DB_DATABASE'),
+        // 🌟 SSL requis par Clever Cloud en production si la connexion est sécurisée
+        ssl: env.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
       },
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
       },
-      debug: app.inDev,
+      // Active les logs de requêtes SQL uniquement en développement local
+      debug: env.get('NODE_ENV') !== 'production', 
     },
   },
 })

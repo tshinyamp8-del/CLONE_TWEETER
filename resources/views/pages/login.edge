@@ -19,7 +19,7 @@
           id="loginEmail" 
           name="email" 
           type="email" 
-          value="{{ old('email') || '' }}" 
+          value="{{ old('email') ?? '' }}" 
           placeholder="Email" 
           required
         >
